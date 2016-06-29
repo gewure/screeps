@@ -15,7 +15,7 @@ var northSourceID = '576a9cd857110ab231d89d0c';
 var northContainerID = '57715701c2c8c47d7dca357a';
 var southContainerID = '5770b7ece2a9e041522a21a9';
 var storageID = '5772838880db66a6420cf328';
-var containerIDs = [northContainerID, southContainerID];
+var containerIDs = [northContainerID, '576f721ea981ddcb59b78814']; //IF more energy is required, add id of secont harvest container
 var containerAndStorageIDs = [northContainerID, southContainerID, storageID];
 var towerIDs = ['576f44f45ab22ea71eb7bf36'];
 
