@@ -1,3 +1,6 @@
+var minWallHitpoints = 500000;
+var minRampartHitpoints = 300000;
+
 var roleTower = {
     run: function(tower) {
         if(tower) {
@@ -22,7 +25,8 @@ var roleTower = {
                 var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
                         filter: (structure) => {
                             return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax) || 
-                                    (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax));
+                                    (structure.structureType == STRUCTURE_WALL && structure.hits < minWallHitpoints)|| 
+                                    (structure.structureType == STRUCTURE_RAMPART && structure.hits < minRampartHitpoints));
                         }, algorithm:'dijkstra'}); 
                 
                 if(closestDamagedStructure) {

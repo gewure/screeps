@@ -1,16 +1,18 @@
 var reHarvestFactor = 30; //if only 30 %energy are left, the creep will gather again
 var reFillFactorEmptySource = 15;
-var storageID = '5772838880db66a6420cf328';
-var containerIDs = ['57715701c2c8c47d7dca357a', '5770b7ece2a9e041522a21a9', storageID];
+var storageID = '';
+var containerIDs = [];
 
 var idlePosX = 28;
 var idlePosY = 37;
-var minEnergyLimit = 800;
 var containerFillFactor = 4;
 
 var roleBuilder = {
     /** @param {Creep} creep **/
-    run: function(creep) {
+    run: function(creep, storID, contIDs) {
+        storageID = storID;
+        containerIDs = contIDs;
+        
         preCheckStates(creep);
 	    if(creep.memory.building) {
             buildingState(creep);
@@ -86,7 +88,6 @@ function getClosestContainer(creep, minEnergyLimit) {
         }
     }
     var closest = creep.pos.findClosestByRange(conn);
-    console.log('xx ' + con);
     return closest;
 }
 
@@ -101,11 +102,9 @@ function getClosestContainer(creep, minEnergyLimit) {
 function sourceState(creep) {
     var carryCount = getActiveBodyPartCount(creep, CARRY);
     var container = getClosestContainer(creep, carryCount * 50 * containerFillFactor);
-        console.log(container);
 
     if(container != null) { //if target container has decent amount of energy
         //get closest resource
-            console.log('xx ');
 
         if(container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
             

@@ -6,10 +6,18 @@ var roleTower = require('role.tower');
 var roleContainerHarvester = require('role.containerHarvester');
 var roleTransporter = require('role.transporter');
 
-
 var logicRespawn = require('logic.respawn');
 
 var clearCreepsTime = 50;
+
+var southSourceID = '576a9cd857110ab231d89d0e';
+var northSourceID = '576a9cd857110ab231d89d0c';
+var northContainerID = '57715701c2c8c47d7dca357a';
+var southContainerID = '5770b7ece2a9e041522a21a9';
+var storageID = '5772838880db66a6420cf328';
+var containerIDs = [northContainerID, southContainerID];
+var containerAndStorageIDs = [northContainerID, southContainerID, storageID];
+var towerIDs = ['576f44f45ab22ea71eb7bf36'];
 
 preRunWork();
 
@@ -27,19 +35,19 @@ function runNormalState() {
              roleHarvester.run(creep);
             }
             if(creep.memory.role == 'upgrader') {
-                roleUpgrader.run(creep);
+                roleUpgrader.run(creep, southContainerID);
             }
              if(creep.memory.role == 'builder') {
-                 roleBuilder.run(creep);
+                 roleBuilder.run(creep, storageID, containerAndStorageIDs);
              }
             if(creep.memory.role == 'melee') {
                 roleMelee.run(creep);
             }
             if(creep.memory.role == 'transporter') {
-                 roleTransporter.run(creep);
+                 roleTransporter.run(creep, containerIDs, containerAndStorageIDs, towerIDs);
              }
             if(creep.memory.role.indexOf('containerHarvester') != -1) {
-                roleContainerHarvester.run(creep);
+                roleContainerHarvester.run(creep, northSourceID, northContainerID, southSourceID, southContainerID);
             }
         } else {
             

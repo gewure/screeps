@@ -1,31 +1,31 @@
-var containerID = '5770b7ece2a9e041522a21a9';
+var containerID = '';
 var container = undefined;
 var untilPathRecalc = 2;
 var meanPathLengthController = 20;
+var neadDeadTicksEnergyReduce = 80;
 
 var roleUpgrader = {
     
     /** @param {Creep} creep **/
-    run: function(creep) {
-        
-         if(creep.memory.state == undefined) {
-            creep.memory.state = 'fill';
-        }
-        
-         if(creep.memory.stillWork == undefined) {
-            creep.memory.stillWork = false;
-        }
+    run: function(creep, contID) {
+        containerID = contID;
+        if(creep.memory.nearDead == undefined) creep.memory.nearDead = false;
+        if(creep.memory.state == undefined) creep.memory.state = 'fill';
+        if(creep.memory.stillWork == undefined) creep.memory.stillWork = false;
+        if(creep.memory.filledNearDead == undefined) creep.memory.filledNearDead = false;
         
         container = Game.getObjectById(containerID);
         
         //creep can't carry more, goto controller
-        if(creep.carry.energy == creep.carryCapacity || creep.memory.stillWork) {
+        if(creep.carry.energy == creep.carryCapacity || creep.memory.stillWork || (creep.memory.nearDead && creep.memory.filledNearDead)) {
             creep.memory.state = 'work';
+            creep.memory.nearDead = false;
             var stateChanged = hasStateChanged(creep);
             upgradeContr(creep, stateChanged); 
         //creep has no energy, go container
-        } else if(creep.carry.energy < creep.carryCapacity && creep.ticksToLive > 50) {
+        } else if(creep.carry.energy < creep.carryCapacity && creep.ticksToLive > neadDeadTicksEnergyReduce) {
             creep.memory.state = 'fill';
+            creep.memory.nearDead = false;
             var stateChanged = hasStateChanged(creep);
             var activeCarryParts = getActiveBodyPartCount(creep, CARRY);
             fillFromContainer(creep, stateChanged, activeCarryParts * 50);
@@ -34,8 +34,9 @@ var roleUpgrader = {
         /*
             TODO: creeps nehmen trotzem gleich viel mit. wahrschienlich weil sie ein paar mal eine kleinere menge aufnehmen. flag benötigt!
         */
-        } else if(creep.carry.energy < creep.carryCapacity && creep.ticksToLive < 50) {
+        } else if(creep.carry.energy < creep.carryCapacity && creep.ticksToLive < neadDeadTicksEnergyReduce) {
             creep.memory.state = 'fill';
+            creep.memory.nearDead = true;
             var stateChanged = hasStateChanged(creep);
             var activeWorkParts = getActiveBodyPartCount(creep, WORK);
             var energyAmount = creep.ticksToLive / activeWorkParts;
@@ -50,7 +51,12 @@ function fillFromContainer(creep, stateChanged, energyAmount) {
     if(_.sum(container.store) > 0) {
         //mit nearto ersetzten
         if(creep.pos.isNearTo(container)) {
-            container.transfer(creep, RESOURCE_ENERGY, energyAmount - creep.carry.energy);
+            var result = container.transfer(creep, RESOURCE_ENERGY, energyAmount - creep.carry.energy);
+            // if(result == ERR_NOT_ENOUGH_ENERGY) {
+            //     container.transfer(creep, RESOURCE_ENERGY, container.store[RESOURCE_ENERGY]);
+            // }
+            if(creep.memory.nearDead)
+                creep.memory.filledNearDead = true;
         } else goto(creep, stateChanged, container);
 
     //idle to reduce cpu load  
@@ -87,6 +93,7 @@ function goto(creep, stateChanged, target) {
         creep.memory.prevX = creep.pos.x;
         creep.memory.prevY = creep.pos.y;
     }
+    return gotoResult;
 }
 
 function getActiveBodyPartCount(creep, part) {

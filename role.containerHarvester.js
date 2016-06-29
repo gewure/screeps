@@ -1,12 +1,13 @@
+
 /*
 
     a creep, that harvests a big amount, but has a low cargo (is near to container) and stores it in a container
 */
-var northSourceID = '576a9cd857110ab231d89d0c';
-var containerNorthID = '57715701c2c8c47d7dca357a';
+var northSourceID = '';
+var containerNorthID = '';
 
-var southSourceID = '576a9cd857110ab231d89d0e';
-var containerSouthID = '5770b7ece2a9e041522a21a9';
+var southSourceID = '';
+var containerSouthID = '';
 
 var source = undefined;
 var container = undefined;
@@ -14,7 +15,12 @@ var untilPathRecalc = 3;
 
 var roleContainerHarvester = {
     /** @param {Creep} creep **/
-    run: function(creep) {
+    run: function(creep, northSID, northCID, southSID, southCID) {
+        northSourceID = northSID;
+        containerNorthID = northCID;
+        southSourceID = southSID;
+        containerSouthID = southCID;
+        
         if(creep.memory.state == undefined) {
             creep.memory.state = 'harvest';
         }
@@ -49,7 +55,6 @@ var roleContainerHarvester = {
 function harvestSource(creep, stateChanged) {
 
     if(source.energy > 0) {
-        console.log(creep.harvest(source) + '  '+ creep);
       if(creep.harvest(source) == ERR_NOT_IN_RANGE) {
         gotoSource(creep, stateChanged);
       }
@@ -96,6 +101,7 @@ function gotoSource(creep, stateChanged) {
         creep.memory.prevX = creep.pos.x;
         creep.memory.prevY = creep.pos.y;
     }
+    return gotoResult;
 }
 
 function hasStateChanged(creep) {

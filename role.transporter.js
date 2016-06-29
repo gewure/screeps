@@ -1,16 +1,18 @@
-var storageID = '5772838880db66a6420cf328';
-var containerIDs = ['57715701c2c8c47d7dca357a', '576f721ea981ddcb59b78814'];
-var containerIDsWStorage = ['57715701c2c8c47d7dca357a', '576f721ea981ddcb59b78814', storageID];
+var containerIDs = [];
+var containerIDsWStorage = [];
 var container = undefined;
 var untilPathRecalc = 2;
-var reFillFactorFullContainer = 25;
+var reFillFactorFullContainer = 20;
 var minEnergyLimit = 0;
-var towerIDs = ['576f44f45ab22ea71eb7bf36'];
+var towerIDs = [];
 
 var roleTransporter = {
     
     /** @param {Creep} creep **/
-    run: function(creep) {
+    run: function(creep, contIDs, contStorIDs, towIDs) {
+        containerIDs = contIDs;
+        containerIDsWStorage = contStorIDs;
+        towerIDs = towIDs;
         
         if(creep.memory.state == undefined) creep.memory.state = 'fill';
         if(creep.memory.stillDistribute == undefined) creep.memory.stillDistribute = false;
@@ -66,13 +68,15 @@ function distribute(creep, stateChanged, activeCarryCount) {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION ||
                                 structure.structureType == STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity;
-                    }, algorithm:'dijkstra'});
+                    }, algorithm:'dijkstra'});           creep.memory.containerPath = undefined;
+
     if(target != null) {
-        if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+        var result = creep.transfer(target, RESOURCE_ENERGY);
+        if(result == ERR_NOT_IN_RANGE) {
             goto(creep, stateChanged, target);
-        } else {
-            //walk back NOW
-            
+        } else if(result == OK) {
+            //delete path to recalc in next tick
+            creep.memory.containerPath = undefined;
         }
         
         if(creep.carry.energy > ((creep.carryCapacity / 100) * reFillFactorFullContainer)) {
@@ -183,6 +187,7 @@ function goto(creep, stateChanged, target) {
         creep.memory.prevX = creep.pos.x;
         creep.memory.prevY = creep.pos.y;
     }
+    return gotoResult;
 }
 
 function hasStateChanged(creep) {

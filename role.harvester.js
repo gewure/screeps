@@ -1,9 +1,9 @@
 var reHarvestFactor = 30; //if only 20 %energy are left, the creep will gather again
 var reFillFactorEmptySource = 15;
 var droppedEnergyHarvestDistance = 20;
-var sourceID = '576a9cd857110ab231d89d0c';
+var sourceID = 'afb76d89e4a600fff28ceed3';
 
-var containerIDs = ['576f721ea981ddcb59b78814'];
+var containerIDs = ['0e6d8cd45eb7f65ae41e12fc'];
 
 
 var roleHarvester = {
