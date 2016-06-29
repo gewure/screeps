@@ -33,7 +33,7 @@ var roleCollector = {
             var target = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_CONTAINER) &&
-                            structure.energy < structure.energyCapacity;
+                           _.sum(structure.energy) < _.sum(structure.energyCapacity);
                     }, algorithm:'dijkstra'
             });
             

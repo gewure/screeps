@@ -5,6 +5,8 @@ var roleRepairer = require('role.repairer');
 var roleTransporter = require('role.transporter');
 var roleMelee = require('role.melee');
 var roleCollector = require('role.collector');
+var roleContainerHarvester = require('role.containerHarvester');
+var roleTower = require('role.tower');
 
 var ticks=0;
 var roomname = 'E36S28';
@@ -30,6 +32,11 @@ module.exports.loop = function () {
             console.log('Clearing non-existing creep memory:', name);
         }
     }
+    
+    //############################## run TOWER
+    
+    var tower = Game.getObjectById('5773e3fae6d164973b320b2c');
+    roleTower.run(tower);
 
     //##############################UNITS arrays
     var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
@@ -45,13 +52,16 @@ module.exports.loop = function () {
     console.log('KILLERS: ' + melees.length);
     
     var repairers = _.filter(Game.creeps, (creep) => creep.memory.role == 'repairer');
-    console.log('repairer: ' + repairers.length);
+    //console.log('repairer: ' + repairers.length);
     
     var transporters = _.filter(Game.creeps, (creep) => creep.memory.role == 'transporter');
     console.log('transporters: ' + transporters.length);
     
     var collectors = _.filter(Game.creeps, (creep) => creep.memory.role == 'collector');
     console.log('collectors: ' + collectors.length);
+    
+    var containerHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'containerHarvester');
+    console.log('containerHarvester: ' + containerHarvesters.length);
     
     //####################### RESPAWN Logic ########################################################################################
     
@@ -61,37 +71,43 @@ module.exports.loop = function () {
     
     // TIER 6 ... > 600 Energy
      if(extensions.length >= 6) {
-        if(harvesters.length < 3) {
+        if(harvesters.length < 1) {
             var newName = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK,CARRY,CARRY, CARRY, MOVE ,MOVE,MOVE, WORK], undefined, {role: 'harvester'});
             console.log('Spawning new harvester [TIER 6]');
         }
         
-        else if(transporters.length < 1) {
+        else if(containerHarvesters.length < 2) {
+            if(containerHarvesters.length %2 == 0) {
+            var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK, WORK,MOVE, MOVE, CARRY, CARRY, CARRY], undefined, {role:'containerHarvesterNorth'});
+            console.log('Spawning a new ContainerHarvester [TIER 6] ');
+            } else {
+                var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK, WORK,MOVE, MOVE, CARRY, CARRY, CARRY], undefined, {role:'containerHarvester'});
+            console.log('Spawning a new ContainerHarvester [TIER 6] ');
+            }
+        }
+        else if(transporters.length < 3) {
             var newTransporter = Game.spawns.ImNoobPlzDontKill.createCreep([MOVE,CARRY,CARRY,MOVE, MOVE, MOVE, CARRY, MOVE, MOVE, MOVE, MOVE, CARRY], undefined, {role:'transporter'});
             console.log('Spawning a new transporter [TIER 6] ');
         }
-        
-       else if(builders.length < 3) {
+       else if(builders.length < 4) {
             var newBuilder = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE ,CARRY], undefined, {role:'builder'});
             console.log('Spawning a new builder [TIER 6]');
         }
-        else if(upgraders.length < 6) {
+        else if(upgraders.length < 3) {
             var newUpgrader = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK, CARRY, CARRY, CARRY,MOVE, MOVE, MOVE, CARRY, MOVE], undefined, {role:'upgrader'});
             console.log('Spawning a new upgrader [TIER 6] ');
         }
-        
         else if(melees.length < armyCount) {
             var newUpgrader = Game.spawns.ImNoobPlzDontKill.createCreep([TOUGH, TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH, TOUGH,MOVE,MOVE, MOVE,MOVE,ATTACK, ATTACK, ATTACK, ATTACK, ], undefined, {role:'melee'});
             console.log('Spawning a new FIGHTER [TIER 6] ');
         }
-       else  if(repairers.length < -1) {
-            var newRepairer = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,CARRY,MOVE], undefined, {role:'repairer'});
-            console.log('Spawning a new repairer  [TIER 6]');
-        }
-    
          else if(collectors.length < 1) {
             var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([CARRY,CARRY,MOVE, MOVE, MOVE, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE], undefined, {role:'collector'});
             console.log('Spawning a new collector [TIER 6] ');
+        }
+         else  if(repairers.length < -1) {
+            var newRepairer = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,CARRY,MOVE], undefined, {role:'repairer'});
+            console.log('Spawning a new repairer  [TIER 6]');
         }
         
     }
@@ -260,6 +276,12 @@ module.exports.loop = function () {
         if(creep.memory.role == 'transporter') {
             roleTransporter.run(creep);
         }
+        //if(creep.memory.role == 'containerHarvester') {
+          //  roleContainerHarvester.run(creep);
+        //}
+        if(creep.memory.role.indexOf('containerHarvester') != -1) {
+                roleContainerHarvester.run(creep);
+            }
     }
     
     //############################################### ECONOMY : EXCESS Measures #######################
@@ -267,7 +289,7 @@ module.exports.loop = function () {
 
     
     //############################# DEFENSE TOWER ########################################################
-    var tower = Game.getObjectById('5773e3fae6d164973b320b2c');
+   /* var tower = Game.getObjectById('5773e3fae6d164973b320b2c');
     if(tower) {
         
         var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
@@ -283,7 +305,7 @@ module.exports.loop = function () {
             tower.repair(closestDamagedStructure);
         }
      
-    }
+    } */
     //############################### DEFENSE ARMY #######################################################
     
     
