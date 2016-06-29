@@ -1,19 +1,10 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('role.melee');
- * mod.thing == 'a thing'; // true
- */
-var idlePosX = 22;
-var idlePosY = 4;
+var idlePosX = 20;
+var idlePosY = 17;
 
 var roleMelee = {
 
     /** @param {Creep} creep **/
     run: function(creep) {
-        creep.moveTo(22,4);
         if(creep.memory.freshSpawn == undefined) {
             creep.memory.freshSpawn = true;
         }

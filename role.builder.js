@@ -1,48 +1,22 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('role.builder');
- * mod.thing == 'a thing'; // true
- */
-var leftMine= '576a9cb857110ab231d899fa';
-var rightMine='576a9cb857110ab231d899f8';
-var unitDistribution=0.5; // 0.5 for left mine, 0,5 for right
-var currentDistribution=1;
-var oldDistribution=1;
-var isNotAssigned = true;
-var state = 'spawned';
-var closestSource = leftMine;
-
-
-
-var reHarvestFactor = 20.0001; //if only 30 %energy are left, the creep will gather again
+var reHarvestFactor = 30; //if only 30 %energy are left, the creep will gather again
 var reFillFactorEmptySource = 15;
-//var sourceID = '576a9c9757110ab231d89552'; // left mine
-var sourceID = leftMine;
+var storageID = '5772838880db66a6420cf328';
+var containerIDs = ['57715701c2c8c47d7dca357a', '5770b7ece2a9e041522a21a9', storageID];
 
-var idlePosX = 37;
-var idlePosY = 32;
+var idlePosX = 28;
+var idlePosY = 37;
+var minEnergyLimit = 800;
+var containerFillFactor = 4;
 
-
-//############################################# class
 var roleBuilder = {
-    
     /** @param {Creep} creep **/
     run: function(creep) {
         preCheckStates(creep);
 	    if(creep.memory.building) {
             buildingState(creep);
-	    } else {
+	    } else if(creep.ticksToLive > 80) {
             sourceState(creep);
 	    } 
-	    
-	     // death is awaiting
-        if(creep.ticksToLive < 5) {
-             state = 'very old';
-            console.log(creep.name + " dies soon. state: " + state);
-        }
 	}
 };
 
@@ -84,7 +58,6 @@ function buildingState(creep) {
         }
     //if the target does not exist anymore (destroyed, despawned, whatever)
     } else {
-                    
         creep.memory.building = false;
         creep.memory.tempWorksite = undefined;
         creep.memory.researchLoc = true;
@@ -98,12 +71,23 @@ function buildRepair(creep, target) {
         //if building failed, it should be something to repair..                
         if(creep.repair(target) == ERR_NOT_IN_RANGE) {
             creep.moveTo(target);
-        } else {
-            creep.repair(target);
         }
     } else {
         creep.build(target);
     }
+}
+
+function getClosestContainer(creep, minEnergyLimit) {
+    var conn = [];
+    for(var i = 0; i < containerIDs.length; ++i) {
+        var con = Game.getObjectById(containerIDs[i]); 
+        if(_.sum(con.store) > minEnergyLimit) {
+            conn[conn.length] = Game.getObjectById(containerIDs[i]);
+        }
+    }
+    var closest = creep.pos.findClosestByRange(conn);
+    console.log('xx ' + con);
+    return closest;
 }
 
 
@@ -115,43 +99,40 @@ function buildRepair(creep, target) {
 
 //if creep is not in building state goto source if not there and harvest
 function sourceState(creep) {
-    console.log('builder ' + creep.name + ' goes harvesting to '+sourceID);
-    var builders = _.filter(Game.creeps, {memory: 'builder'});
+    var carryCount = getActiveBodyPartCount(creep, CARRY);
+    var container = getClosestContainer(creep, carryCount * 50 * containerFillFactor);
+        console.log(container);
 
-    if(currentDistribution >= unitDistribution) {
-        var closestSource = Game.getObjectById(rightMine);
-        currentDistribution=oldDistribution-1/(_.size(builders)-1);
-        oldDistribution=currentDistribution;
+    if(container != null) { //if target container has decent amount of energy
+        //get closest resource
+            console.log('xx ');
+
+        if(container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            
+            //creep.moveByPath(creep.memory.closestPath);
+            creep.moveTo(container);
+        //if the source is empty and the creep has a decent amount of energy, start building stuff
+        } else if (container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_ENOUGH_RESOURCES && creep.carry.energy > ((creep.carryCapacity / 100) * reFillFactorEmptySource)) {
+            creep.memory.building = true;
+        //if source is empty and no energy, move away (to prevent blocking)
+        } else if (creep.carry.energy == 0) {
+            if(!creep.pos.isNearTo(idlePosX, idlePosY)) {
+                creep.moveTo(idlePosX, idlePosY, {reusePath: true});
+            }
+        } else if(container.transfer(creep) == ERR_NOT_ENOUGH_RESOURCES) {
+            creep.memory.building = true;
+        }
     } else {
-        var closestSource = Game.getObjectById(sourceID);
-    }
-    
-    if(Game.getObjectById(sourceID).energy > 0) { //if target exists
-            //get closest resource
-            if(creep.harvest(closestSource) == ERR_NOT_IN_RANGE) {
-                //creep.moveByPath(creep.memory.closestPath);
-                creep.moveTo(closestSource);
-            //if the source is empty and the creep has a decent amount of energy, start building stuff
-            } else if (creep.harvest(closestSource) == ERR_NOT_ENOUGH_RESOURCES && creep.carry.energy > ((creep.carryCapacity / 100) * reFillFactorEmptySource)) {
-                creep.memory.building = true;
-            //if source is empty and no energy, move away (to prevent blocking)
-            } else if (creep.carry.energy == 0) {
-                if(!creep.pos.isNearTo(idlePosX, idlePosY)) {
-                    creep.moveTo(idlePosX, idlePosY, {reusePath: true});
-                }
-            } else if(creep.harvest(closestSource) == ERR_NOT_ENOUGH_RESOURCES) {
-                creep.memory.building = true;
+        
+                
+        if(creep.carry.energy == 0) {
+            if(!creep.pos.isNearTo(idlePosX, idlePosY)) {
+                creep.moveTo(idlePosX, idlePosY, {reusePath: true});
             }
         } else {
-                    
-            /*if(creep.carry.energy == 0) {
-                if(!creep.pos.isNearTo(idlePosX, idlePosY)) {
-                    creep.moveTo(idlePosX, idlePosY, {reusePath: true});
-                }
-            } else {
-                creep.memory.building = true;
-            } */
-       }
+            creep.memory.building = true;
+        }
+    }
 }
 
 function searchNewTarget(creep) {
@@ -164,9 +145,8 @@ function searchNewTarget(creep) {
 	} else {
 	        
         var lowLifeTargets = creep.room.find(FIND_STRUCTURES, {
-            filter: (object) => {return (object.hits < object.hitsMax);}, algorithm:'dijkstra'
-            }); 
-        
+            filter: (object) => {return (object.hits < object.hitsMax && object.structureType != STRUCTURE_ROAD);}, algorithm:'dijkstra'
+            });
         
         lowLifeTargets.sort((a,b) => a.hits - b.hits);
         
@@ -175,6 +155,17 @@ function searchNewTarget(creep) {
         }
         
     }
+}
+
+function getActiveBodyPartCount(creep, part) {
+    var carryPartsCount = 0;
+    var creepBody = creep.body;
+    for(var i = 0; i < creepBody.length; ++i) {
+        if(creepBody[i].type == part) {
+            ++carryPartsCount;
+        }
+    }
+    return carryPartsCount;
 }
 
 module.exports = roleBuilder;
