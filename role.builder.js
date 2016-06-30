@@ -9,15 +9,15 @@ var isNotAssigned = true;
 var state = 'spawned';
 var closestSource = leftMine; */
 
-var reHarvestFactor = 30; //if only 30 %energy are left, the creep will gather again
+var reHarvestFactor = 20; //if only 30 %energy are left, the creep will gather again
 var reFillFactorEmptySource = 15;
 //var storageID = '5772838880db66a6420cf328';
-var containerIDs = ['5773cc3684ed25e4699c070c', '5773f5d774e2c6695fefdb07'];
+var containerIDs = ['5773cc3684ed25e4699c070c','5773f5d774e2c6695fefdb07'];
 
-var idlePosX = 38;
-var idlePosY = 11;
+var idlePosX = 35;
+var idlePosY = 31;
 var minEnergyLimit = 100;
-var containerFillFactor = 0.1;
+var containerFillFactor = 0.2;
 
 var roleBuilder = {
     /** @param {Creep} creep **/

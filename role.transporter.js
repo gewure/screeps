@@ -1,6 +1,6 @@
 
 var storageID = '576a9cb857110ab231d899f8';
-var containerIDs = ['5773cc3684ed25e4699c070c', '5773f5d774e2c6695fefdb07'];
+var containerIDs = ['5773cc3684ed25e4699c070c', '5773f5d774e2c6695fefdb07', '57745542b6d085646bee57cf'];
 var containerIDsWStorage = ['5773cc3684ed25e4699c070c', '5773f5d774e2c6695fefdb07', storageID];
 var container = undefined;
 var untilPathRecalc = 2;
@@ -94,7 +94,8 @@ function checkForTowerFill(creep, stateChanged, activeCarryCount) {
     if(closestTowerLowEnergy != null) {
         fillTower(creep, closestTowerLowEnergy, stateChanged);
             
-    } else if(_.sum(creep.room.storage.store) < creep.room.storage.storeCapacity) {
+    } //else if(_.sum(creep.room.storage.store) < creep.room.storage.storeCapacity)
+        else if (_.sum(Game.getObjectById(containerIDs[2]).carry < Game.getObjectById(containerIDs[2]).carryCapacity)) {
         
         if(creep.transfer(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
             goto(creep, stateChanged, creep.room.storage);
@@ -115,6 +116,7 @@ function fillTower(creep, tower, stateChanged) {
             }
         //all storages are empty, idle at storage
         } else {
+            console.log('transporter '+ creep.name + ' wants to idle');
             var idlePos = creep.room.controller; //TODO
                goto(creep, stateChanged, idlePos );
                //creep.move(TOP | BOTTOM);

@@ -31,7 +31,9 @@ var roleTower = {
                 var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
                         filter: (structure) => {
                             return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax) || 
-                                    (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax));
+                                    (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) ||
+                                    (structure.structureType == STRUCTURE_WALL && structure.hits < (1/30000)*structure.hitsMax) ||
+                                    (structure.structureType == STRUCTURE_RAMPART && structure.hits < (1/30)*structure.hitsMax));
                         }, algorithm:'dijkstra'}); 
                 
                 if(closestDamagedStructure) {
