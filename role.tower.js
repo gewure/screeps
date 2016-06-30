@@ -26,19 +26,35 @@ var roleTower = {
                 }
             
                 
-            } else {
+            } else if(tower.energy > 0.1 * tower.energyCapacity){
             
-                var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
+            // repair lowest first
+              var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
                         filter: (structure) => {
-                            return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax) || 
-                                    (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) ||
-                                    (structure.structureType == STRUCTURE_WALL && structure.hits < (1/30000)*structure.hitsMax) ||
-                                    (structure.structureType == STRUCTURE_RAMPART && structure.hits < (1/30)*structure.hitsMax));
+                            return ((structure.structureType == STRUCTURE_ROAD && structure.hits < 100) || 
+                                    (structure.structureType == STRUCTURE_CONTAINER && structure.hits < 100) ||
+                                    (structure.structureType == STRUCTURE_WALL && structure.hits < (1/30000)*100) ||
+                                    (structure.structureType == STRUCTURE_RAMPART && structure.hits < (1/20)*100));
                         }, algorithm:'dijkstra'}); 
                 
                 if(closestDamagedStructure) {
                     tower.repair(closestDamagedStructure);
                 }
+            
+        
+                var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
+                        filter: (structure) => {
+                            return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax) || 
+                                    (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) ||
+                                    (structure.structureType == STRUCTURE_WALL && structure.hits < (1/30000)*structure.hitsMax) ||
+                                    (structure.structureType == STRUCTURE_RAMPART && structure.hits < (1/20)*structure.hitsMax));
+                        }, algorithm:'dijkstra'}); 
+                
+                if(closestDamagedStructure) {
+                    tower.repair(closestDamagedStructure);
+                }
+                
+              
             }
         
             

@@ -127,5 +127,15 @@ var roleCollector = {
         return healer;
     }
     
+    function patrol(creep) {
+        
+        while(!fightMode) {
+            creep.moveTo(21,23);
+            creep.moveTo(34,31);
+            creep.moveTo(37,10);
+        }
+        return;
+    }
+    
 
 module.exports = roleCollector;

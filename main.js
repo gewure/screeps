@@ -12,12 +12,16 @@ var ticks=0;
 var roomname = 'E36S28';
 
 //############# Defense Constants
+var currentFIghters = 0;
 var armyCount = 0;
+var upgraderCount = 2;
+var collectorcount = 0;
 var isWar = false;
 var allied = 'b0mmel';
 var isUnitDown= false;
 var isBuildingAttacked = false;
 var isEnemyHere = false;
+var ticksSinceLastEnemySeen = 500;
     
 // mining
 var leftMineSlots = 3;
@@ -41,15 +45,61 @@ module.exports.loop = function () {
     
     //############################ PEACE & WAR states ##########################################
     
-  //  var enemysFound = Game.room(FIND_HOSTILE_CREEPS);
+    var enemysFound = Game.rooms[roomname].find(FIND_HOSTILE_CREEPS);
     
-    if(/*enemysFound*/false) {
+    // are there enemies? 
+    if(!(enemysFound.length < 1)) {
         console.log('WAR WAR WAR: ' + enemysFound.length + ' hostile creeps are in the room!!!!');
         isEnemyHere = true;
+        collectorcount++;
     } else {
+        collectorcount = 0;
         isEnemyHere = false;
+        isWar = false;
+        
+        if(ticksSinceLastEnemySeen > 500) {
+            ticksSinceLastEnemySeen++;
+        }
     }
     
+    // more than 2 enemies? -> war!!!
+    // here comes immidiate WAR logic
+    if(enemysFound.length > 2) {
+        isWar = true;
+        console.log('Damnit. WAR over our colony! :O');
+    } else {
+        isWar = false;
+        // set upgradercount back to normal
+        upgraderCount = 2;
+    }
+    
+    // if a enemy is spotted, produce a fighter
+    if(isEnemyHere) {
+        if(currentFIghters < enemysFound.length && currentFighters <= 3) {
+            if(Game.spawns.ImNoobPlzDontKill.energy >= 800){
+                var killer = Game.spawns.ImNoobPlzDontKill.createCreep([TOUGH, TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH, TOUGH, TOUGH,TOUGH,MOVE,MOVE,MOVE,MOVE,ATTACK, ATTACK, ATTACK, RANGED_ATTACK], undefined, {role:'melee'});
+                console.log('Spawning a new FIGHTER [TIER 6] ');
+                currentFighters++;
+            } else {
+                consol.log('fuck. enemies there but no resources for fighters');
+            }
+        }
+    }
+    
+    //#################################################### WAR Respawn actions 
+    // WAR is defined as if there are more than 2 enemies
+    // here comes special WAR logic
+    while(isWar) {
+        if(ticks%100==0) {
+            var killer = Game.spawns.ImNoobPlzDontKill.createCreep([TOUGH, TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH, TOUGH, TOUGH,TOUGH,MOVE,MOVE,MOVE,MOVE,ATTACK, ATTACK, ATTACK, RANGED_ATTACK], undefined, {role:'melee'});
+            console.log('Spawning a new FIGHTER [TIER 6] ');
+        }
+        // stop upgrading to save resources to defent
+        if(upgraderCount > 0) {
+            upgraderCount = 0;
+        }
+        ticksSinceLastEnemySeen = 0;
+    }
     
 
     //############################## run TOWER
@@ -90,26 +140,19 @@ module.exports.loop = function () {
       filter: { structureType: STRUCTURE_EXTENSION }
     });
     
-    //#################################################### WAR Respawn actions 
     
-    while(isWar) {
-        if(ticks%100==0) {
-            var killer = Game.spawns.ImNoobPlzDontKill.createCreep([TOUGH, TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH, TOUGH, TOUGH,TOUGH,MOVE,MOVE,MOVE,MOVE,ATTACK, ATTACK, ATTACK, RANGED_ATTACK], undefined, {role:'melee'});
-            console.log('Spawning a new FIGHTER [TIER 6] ');
-        }
-    }
     
     //##################################################### Peacetime Respawn logic
-    // TIER 8 ... > 700 Energy
-     if(extensions.length >= 8) {
+        // TIER 8 ... > 700 Energy
+     if(extensions.length >= 10) {
          
         if(harvesters.length < 3) {
-            var newName = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK,CARRY,CARRY, CARRY, MOVE ,MOVE,MOVE, WORK], undefined, {role: 'harvester'});
+            var newName = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK,CARRY,CARRY, CARRY, MOVE ,MOVE, WORK], undefined, {role: 'harvester'});
             console.log('Spawning new harvester [TIER 6]');
         }
         
         else if(containerHarvesters.length < 2) {
-               var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK,MOVE, MOVE, CARRY, CARRY, CARRY, CARRY], undefined, {role:'containerHarvester'});
+               var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK,MOVE, MOVE, CARRY, CARRY, CARRY], undefined, {role:'containerHarvester'});
             console.log('Spawning a new ContainerHarvester [TIER 6] ');
             /*if(containerHarvesters.length %2 == 0) {
             var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK, WORK,MOVE, MOVE, CARRY, CARRY, CARRY], undefined, {role:'containerHarvesterNorth'});
@@ -120,7 +163,53 @@ module.exports.loop = function () {
             }*/
         }
         else if(transporters.length < 2) {
-            var newTransporter = Game.spawns.ImNoobPlzDontKill.createCreep([MOVE,CARRY,CARRY,MOVE, MOVE, MOVE, CARRY, MOVE, MOVE, MOVE, MOVE, CARRY], undefined, {role:'transporter'});
+            var newTransporter = Game.spawns.ImNoobPlzDontKill.createCreep([MOVE,CARRY,CARRY,MOVE, MOVE, CARRY, CARRY, MOVE, MOVE], undefined, {role:'transporter'});
+            console.log('Spawning a new transporter [TIER 6] ');
+        }
+       else if(builders.length < 4) {
+            var newBuilder = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK, CARRY, CARRY, CARRY, MOVE, MOVE, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE], undefined, {role:'builder'});
+            console.log('Spawning a new builder [TIER 6]');
+        }
+        else if(upgraders.length < upgraderCount) {
+            var newUpgrader = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK, CARRY, CARRY, CARRY,MOVE, MOVE, MOVE, MOVE], undefined, {role:'upgrader'});
+            console.log('Spawning a new upgrader [TIER 6] ');
+        }
+        else if(melees.length < armyCount) { // 11x tough, 4x move, 3x attack, 1, ranged = 80+200+240+150 = 700 cost !!
+            var killer = Game.spawns.ImNoobPlzDontKill.createCreep([TOUGH, TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH,TOUGH, TOUGH, TOUGH,TOUGH,MOVE,MOVE,MOVE,MOVE,ATTACK, ATTACK, ATTACK, RANGED_ATTACK], undefined, {role:'melee'});
+            console.log('Spawning a new FIGHTER [TIER 6] ');
+        }
+         else if(collectors.length < 0) {
+            var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([CARRY,CARRY,MOVE, MOVE, MOVE, CARRY, MOVE, MOVE, MOVE, TOUGH, TOUGH,TOUGH, TOUGH, TOUGH, RANGED_ATTACK], undefined, {role:'collector'});
+            console.log('Spawning a new collector [TIER 6] ');
+        }
+         else  if(repairers.length < -1) {
+            var newRepairer = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,CARRY,MOVE], undefined, {role:'repairer'});
+            console.log('Spawning a new repairer  [TIER 6]');
+        }
+        
+    }
+    
+    // TIER 8 ... > 700 Energy
+    else if(extensions.length == 8 || extension.length == 9) {
+         
+        if(harvesters.length < 2) {
+            var newName = Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK,CARRY,CARRY, CARRY, MOVE ,MOVE, WORK], undefined, {role: 'harvester'});
+            console.log('Spawning new harvester [TIER 6]');
+        }
+        
+        else if(containerHarvesters.length < 2) {
+               var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK,MOVE, MOVE, CARRY, CARRY, CARRY], undefined, {role:'containerHarvester'});
+            console.log('Spawning a new ContainerHarvester [TIER 6] ');
+            /*if(containerHarvesters.length %2 == 0) {
+            var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK, WORK,MOVE, MOVE, CARRY, CARRY, CARRY], undefined, {role:'containerHarvesterNorth'});
+            console.log('Spawning a new ContainerHarvester [TIER 6] ');
+            } else {
+                var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK, WORK,MOVE, MOVE, CARRY, CARRY, CARRY], undefined, {role:'containerHarvester'});
+            console.log('Spawning a new ContainerHarvester [TIER 6] ');
+            }*/
+        }
+        else if(transporters.length < 2) {
+            var newTransporter = Game.spawns.ImNoobPlzDontKill.createCreep([MOVE,CARRY,CARRY,MOVE, MOVE, MOVE, CARRY, CARRY, MOVE, MOVE, MOVE], undefined, {role:'transporter'});
             console.log('Spawning a new transporter [TIER 6] ');
         }
        else if(builders.length < 3) {
@@ -136,7 +225,7 @@ module.exports.loop = function () {
             console.log('Spawning a new FIGHTER [TIER 6] ');
         }
          else if(collectors.length < 1) {
-            var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([CARRY,CARRY,MOVE, MOVE, MOVE, CARRY, MOVE, MOVE, MOVE, MOVE, TOUGH, TOUGH,TOUGH, TOUGH, TOUGH, RANGED_ATTACK], undefined, {role:'collector'});
+            var newCollector = Game.spawns.ImNoobPlzDontKill.createCreep([CARRY,CARRY,MOVE, MOVE, MOVE, CARRY, MOVE, MOVE, TOUGH, TOUGH,TOUGH, TOUGH, TOUGH, RANGED_ATTACK], undefined, {role:'collector'});
             console.log('Spawning a new collector [TIER 6] ');
         }
          else  if(repairers.length < -1) {

@@ -16,8 +16,8 @@ var containerIDs = ['5773cc3684ed25e4699c070c','5773f5d774e2c6695fefdb07'];
 
 var idlePosX = 35;
 var idlePosY = 31;
-var minEnergyLimit = 100;
-var containerFillFactor = 0.2;
+var minEnergyLimit = 200;
+var containerFillFactor = 0.4;
 
 var roleBuilder = {
     /** @param {Creep} creep **/
@@ -152,6 +152,17 @@ function searchNewTarget(creep) {
     	creep.memory.tempWorksite = constructionSite.id;
     	//console.log('OK   ' + constructionSite);
 	} else {
+	    
+	    // build the rampart first - annoying that they are stopped with 1 hp
+	     var lowLifeTargets = creep.room.find(FIND_STRUCTURES, {
+            filter: (object) => {return (object.hits < (object.hitsMax *(1/30))  && object.structureType == STRUCTURE_RAMPART);}, algorithm:'dijkstra'
+            });
+        
+        lowLifeTargets.sort((a,b) => a.hits - b.hits);
+        
+        if(lowLifeTargets.length > 0) {
+            creep.memory.tempWorksite = lowLifeTargets[0].id;
+        }
 	        
         var lowLifeTargets = creep.room.find(FIND_STRUCTURES, {
             filter: (object) => {return (object.hits < object.hitsMax && object.structureType != STRUCTURE_ROAD);}, algorithm:'dijkstra'

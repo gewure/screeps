@@ -16,6 +16,8 @@ var roleContainerHarvester = {
     run: function(creep) {
         if(creep.memory.state == undefined) {
             creep.memory.state = 'harvest';
+        } else {
+            creep.memory.state = 'harvest';
         }
         if(creep.memory.role == 'containerHarvesterNorth') {
             source = Game.getObjectById(northSourceID);
@@ -29,6 +31,7 @@ var roleContainerHarvester = {
         if(creep.carry.energy < creep.carryCapacity) {
             creep.memory.state = 'harvest';
             var stateChanged = hasStateChanged(creep);
+            //gotoSource(creep, stateChanged);
             harvestSource(creep, stateChanged);
         //creep can't carry more, goto container if it is not full and fill
         } else if(creep.carry.energy == creep.carryCapacity && _.sum(container.store) < container.storeCapacity) {
