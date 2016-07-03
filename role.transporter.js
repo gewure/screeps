@@ -5,14 +5,16 @@ var untilPathRecalc = 2;
 var reFillFactorFullContainer = 20;
 var minEnergyLimit = 0;
 var towerIDs = [];
+var minCapLinkIDs = undefined;
 
 var roleTransporter = {
     
     /** @param {Creep} creep **/
-    run: function(creep, contIDs, contStorIDs, towIDs) {
+    run: function(creep, contIDs, contStorIDs, towIDs, minLinkID) {
         containerIDs = contIDs;
         containerIDsWStorage = contStorIDs;
         towerIDs = towIDs;
+        minCapLinkIDs = minLinkID;
         
         if(creep.memory.state == undefined) creep.memory.state = 'fill';
         if(creep.memory.stillDistribute == undefined) creep.memory.stillDistribute = false;
@@ -27,7 +29,7 @@ var roleTransporter = {
         //creep has no energy, go to container
         } else if(creep.carry.energy < creep.carryCapacity) {
             //only collect if creep has more than x ticks to live
-            if(creep.ticksToLive > 20) {
+            if(creep.ticksToLive >= 10) {
                 creep.memory.state = 'fill';
                 var stateChanged = hasStateChanged(creep);
                 fillFromContainer(creep, stateChanged, activeCarryCount);
@@ -86,13 +88,19 @@ function distribute(creep, stateChanged, activeCarryCount) {
         }
     
     //transfer energy from storage to tower if tower has less energy than the transporter can carry. if tower has enough, transfere rest to big storage 
+    //or fillmin cap containers
     } else {
-        checkForTowerFill(creep, stateChanged, activeCarryCount);
+        var minCaps = getMinCapLinkContainer();
+        if(minCaps != undefined) {
+            fillMinCap(creep, minCaps[0], stateChanged);
+        } else {
+            checkForTowerFill(creep, stateChanged, activeCarryCount);
+        }
     }
 }
 
 function checkForTowerFill(creep, stateChanged, activeCarryCount) {
-    var closestTowerLowEnergy = getClosestLowEnergyTower(creep, activeCarryCount * 50);
+    var closestTowerLowEnergy = getClosestLowEnergyTarget(creep, activeCarryCount * 50, towerIDs);
 
     if(closestTowerLowEnergy != null) {
         fillTower(creep, closestTowerLowEnergy, stateChanged);
@@ -102,6 +110,49 @@ function checkForTowerFill(creep, stateChanged, activeCarryCount) {
         if(creep.transfer(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
             goto(creep, stateChanged, creep.room.storage);
         }
+    }
+}
+
+// falls links spezifiziert worden sind, die immer bis zu einem gewiwsen cap gefüllt sien müssen, gib sie zurück
+function getMinCapLinkContainer() {
+    
+    var targets = undefined;
+    if(minCapLinkIDs != undefined) {
+        //check if a container has less energy than defined
+        
+        for(var contID in minCapLinkIDs) {
+            var realCont = Game.getObjectById(contID);
+            
+            if((realCont.store == undefined && realCont.energy < minCapLinkIDs[contID]) || (realCont.store != undefined && _.sum(realCont.store) < minCapLinkIDs[contID])) {
+                if(targets == undefined) targets = [];
+                targets[targets.length] = realCont;
+            } 
+        }
+    }
+    
+    return targets;
+}
+
+function fillMinCap(creep, target, stateChanged) {
+    
+    //fill from storage
+    if(creep.carry.energy < creep.carryCapacity) {
+        
+        var container = getClosestHighEnergyContainer(creep, minEnergyLimit, containerIDsWStorage);
+        //if a non-empty container exists, go there
+        if(container) {
+            if(container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                goto(creep, stateChanged, container);
+            }
+        //all storages are empty, idle at storage
+        } else {
+               goto(creep, stateChanged, creep.room.storage);
+        }
+        
+    //fill tower
+    } else {
+        if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
+            goto(creep, stateChanged, target);
     }
 }
 
@@ -150,12 +201,12 @@ function getClosestHighEnergyContainer(creep, minEnergyLimit, idArray) {
     return closest;
 }
 
-function getClosestLowEnergyTower(creep, energyLimit) {
+function getClosestLowEnergyTarget(creep, energyLimit, targetIDs) {
     var closestArray = [];
-    for(var i = 0; i < towerIDs.length; ++i) {
-        var tower = Game.getObjectById(towerIDs[i]); 
-        if(tower.energy < tower.energyCapacity - energyLimit) {
-            closestArray[closestArray.length] = tower;
+    for(var i = 0; i < targetIDs.length; ++i) {
+        var target = Game.getObjectById(targetIDs[i]); 
+        if(target != null && ((target.store == undefined && target.energy < target.energyCapacity - energyLimit) || (target.store != undefined && _.sum(target.store) < target.storeCapacity - energyLimit))) {
+            closestArray[closestArray.length] = target;
         }
     }
     var closest = creep.pos.findClosestByRange(closestArray);

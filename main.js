@@ -41,11 +41,13 @@ var creepBodyParts =    {[myRooms[0]]: [
                                         [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                         [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
                                         [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                        [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
+                                        [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
                                     ]
                         };
 //{RAUM: {ROLLE: [x,y]}}; wohin der creep direkt nach dem spawnen hinläuft
 var preRespawnDestination = {[myRooms[0]]: [[28,30], [25,29], [22,41], [0,0], [8,40]]};
+//falls ein link/container immer bis zu einem cap gefüllt werden soll, hier rein ({raum: {ID: minCap}})
+var minCapLinkIDs = {[myRooms[0]]: {[harvestLinkID[myRooms[0]]]: 500}};
 
 preRunWork();
 module.exports.loop = function () {
@@ -89,7 +91,7 @@ function runNormalState() {
             } else if(creep.memory.role == 'melee') {
                 roleMelee.run(creep);
             } else if(creep.memory.role == 'transporter') {
-                roleTransporter.run(creep, containerIDs[spawnRoomName], containerAndStorageIDs[spawnRoomName], towerIDs[spawnRoomName]);
+                roleTransporter.run(creep, containerIDs[spawnRoomName], containerAndStorageIDs[spawnRoomName], towerIDs[spawnRoomName], minCapLinkIDs[spawnRoomName]);
             } else if(creep.memory.role == 'containerHarvesterNorth') {
                 roleContainerHarvester.run(creep, northSourceID[spawnRoomName], northContainerID[spawnRoomName], undefined);
             } else if(creep.memory.role == 'containerHarvesterSouth') {
