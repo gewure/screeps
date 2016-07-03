@@ -33,7 +33,7 @@ var allied = ['Gewure'];
 //AB HIER REIHENFOLGE DER ARRAYS WICHTIG!!! das heißt, wenn in roles ein einem raum zb. ein transporter an array position 0 steht, müssen seine eigenschaften ebenfalls am index 0 definiert werden.
 //**************
 var roles = {[myRooms[0]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader']};
-var shouldPreRespawn = {[myRooms[0]]: [true, true, true, 0, true]};
+var shouldPreRespawn = {[myRooms[0]]: [true, true, true, false, true]};
 var spawnUntil = {[myRooms[0]]: [1, 1, 1, 1, 1]}; 
 var maxCreepsPerRole = {[myRooms[0]]: [1, 2, 1, 1, 1]};
 var creepBodyParts =    {[myRooms[0]]: [
