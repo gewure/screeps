@@ -19,11 +19,11 @@ var mainSpawns = {[myRooms[0]]: '576d823abe1cccb44b189dc7'};
 
 var southSourceID = {[myRooms[0]]: '576a9cd857110ab231d89d0e'};
 var northSourceID = {[myRooms[0]]: '576a9cd857110ab231d89d0c'};
-var northContainerID = {[myRooms[0]]: '57715701c2c8c47d7dca357a'};
-var southContainerID = {[myRooms[0]]: '5770b7ece2a9e041522a21a9'};
+var northContainerID = {[myRooms[0]]: ['57715701c2c8c47d7dca357a','577945c58fa71ef76bb77cc3']};
+var southContainerID = {[myRooms[0]]: ['5770b7ece2a9e041522a21a9','577951f78687b175407aecf4']};
 var storageID = {[myRooms[0]]: '5772838880db66a6420cf328'};
-var containerIDs = {[myRooms[0]]: [northContainerID[myRooms[0]], southContainerID[myRooms[0]]]}; //IF more energy is required, add id of secont harvest container
-var containerAndStorageIDs = {[myRooms[0]]: [northContainerID[myRooms[0]], southContainerID[myRooms[0]], storageID[myRooms[0]]]};
+var containerIDs = {[myRooms[0]]: [ [northContainerID[myRooms[0]][0]], [northContainerID[myRooms[0]][1]], [southContainerID[myRooms[0]][0]], [southContainerID[myRooms[0]][1]]]}; //IF more energy is required, add id of secont harvest container
+var containerAndStorageIDs = {[myRooms[0]]: [[northContainerID[myRooms[0]][0]], [northContainerID[myRooms[0]][1]], [southContainerID[myRooms[0]][0]], [southContainerID[myRooms[0]][1]], storageID[myRooms[0]]]};
 var towerIDs = {[myRooms[0]]: ['576f44f45ab22ea71eb7bf36', '577498bad263b01f305db4ea']};
 var harvestLinkID = {[myRooms[0]]: '577484b08bf1541b4fc49eb5'};
 var upgraderLinkID = {[myRooms[0]]: '57748e0ad11ec119099d8d36'};
@@ -38,7 +38,7 @@ var allied = ['Gewure'];
 var roles = {[myRooms[0]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomHarvester']};
 var shouldPreRespawn = {[myRooms[0]]: [true, true, true, false, true, false]};
 var spawnUntil = {[myRooms[0]]: [1, 1, 1, 1, 1, 1]}; 
-var maxCreepsPerRole = {[myRooms[0]]: [1, 3, 1, 1, 1, 1]};
+var maxCreepsPerRole = {[myRooms[0]]: [1, 2, 1, 1, 1, 3]};
 var creepBodyParts =    {[myRooms[0]]: [
                                         [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
                                         [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
