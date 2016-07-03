@@ -5,75 +5,204 @@ var creepBodyParts = [];
 
 var maxRespawnTick = 1;
 var containerHarvesterPreRespawnTicks = 60;
+var singleBodyPartSpawnTime = 3;
+var curRoom = undefined;
+var spawn = undefined;
+var spawnCreepsUntil = undefined;
+var shouldPreRespawn = undefined;
+var preRespawnDestination = undefined;
 
 var logicRespawn = {
-    run: function(rol, maxPerRole, bodyParts) {
+    run: function(rol, maxPerRole, bodyParts, myRoom, mySpawn, spawnUntil, shouldPreR, preRespawnDest) {
         roles = rol; 
         maxCreepsPerRole = maxPerRole; 
         creepBodyParts = bodyParts;
-        checkForRespawn();
-        spawnCreeps();
+        curRoom = Game.rooms[myRoom];
+        spawn = Game.getObjectById(mySpawn);
+        spawnCreepsUntil = spawnUntil;
+        shouldPreRespawn = shouldPreR;
+        preRespawnDestination = preRespawnDest;
+        
+        
+        if(Memory.preSpawnDuration == undefined) Memory.preSpawnDuration = {};
+        if(Memory.preSpawnDuration[myRoom] == undefined) Memory.preSpawnDuration[myRoom] = {};
+        
+        if(spawn.spawning == null) {
+            var allCreeps = curRoom.find(FIND_MY_CREEPS);
+            var missingRoles = getMissingRoles(allCreeps);
+            var priorizedCreep = getMostPriorizedMissingCreep(missingRoles);
+            var preRespawnCreep = getPreRespawnCreep(allCreeps);    
+            var creepToSpawn = undefined;
+            
+            // dann checken was wichtiger ist, prerespawn oder der mit mehr priorität. also nochmal eine priorisierung der beiden.
+            if(priorizedCreep != undefined && preRespawnCreep != undefined) {
+                if(roleToArrayIndex(priorizedCreep) < roleToArrayIndex(preRespawnCreep))
+                      creepToSpawn = priorizedCreep;
+                else creepToSpawn = preRespawnCreep;
+            } else {
+                if(preRespawnCreep != undefined) creepToSpawn = preRespawnCreep;
+                if(priorizedCreep != undefined) creepToSpawn = priorizedCreep;
+            }
+            
+            if(creepToSpawn != undefined) {
+                var creepName = spawn.createCreep(creepBodyParts[roleToArrayIndex(creepToSpawn)], undefined, {role: creepToSpawn, prevX: 0, prevY: 0, preRespawn: false, spawnRoomName: curRoom.name});
+                console.log(  ((creepName != -6) ? ('spawn creep \"' + creepName + '\" with role [' + creepToSpawn + ']') : ' lol ') );
+            }
+        }
     }
 };
 
-function spawnCreeps() {
-    if(Memory.nextCreep != undefined && canCreepSpawn(Memory.nextCreep)) {
-        var creepName = Game.spawns.Koblach.createCreep(creepBodyParts[roleToArrayIndex(Memory.nextCreep)], undefined, {role: Memory.nextCreep, prevX: 0, prevY: 0});
-        Memory.nextCreep = undefined;
-    }
-}
-
-function canCreepSpawn(role) {
-
-    var cost = creepCost(creepBodyParts[roleToArrayIndex(role)]);
-    if(role == 'containerHarvesterNorth' || role == 'transporter') {  //HIER MEHR ROLLEN EINFÜGEN FÜR PRE-SPAWN (||)
-        if(Game.spawns.Koblach.room.energyAvailable >= cost && !Game.spawns.Koblach.spawning && getLivingCreeps(role) <= maxCreepsPerRole[roleToArrayIndex(role)]) {
-            return true;
-        } else return false;
-    } else {
-        if(Game.spawns.Koblach.room.energyAvailable >= cost && !Game.spawns.Koblach.spawning && getLivingCreeps(role) < maxCreepsPerRole[roleToArrayIndex(role)]) {
-            return true;
-        } else return false;
-    }
-}
-
-function checkForRespawn() {
-
-    for(var i = 0; i < roles.length; ++i) {
-
-        var nearDead = getLivingCreepsNearDead(roles[i], containerHarvesterPreRespawnTicks);
-
-        if(nearDead.length > 0 && (roles[i] == 'containerHarvester' || roles[i] == 'transporter')) {
-            Memory.nextCreep = roles[i];
-            break;
-        } else {
-            var found = false;
+function getMostPriorizedMissingCreep(missingRoles) {
+    var mostPriorised = undefined;
+    
+    if(Object.keys(missingRoles).length > 0) {
+        if(spawn.spawning != null) {
+            var curSpawningCreepRole = Game.creeps[spawn.spawning.name].memory.role;
+            if(missingRoles[curSpawningCreepRole] != undefined)
+                --missingRoles[curSpawningCreepRole];
+        }
+        
+        for(var cRole in missingRoles) {
+            //if creep role isn't currently spawning
+            if(missingRoles[cRole] <= 0 || missingRoles[cRole] == undefined)
+               delete missingRoles[cRole];
+        }
+       
+        var creepBelowCap = undefined;
+        //get missing creep below cap
+        for(var i = 0; i < roles.length; ++i) {
+            if(maxCreepsPerRole[i] - missingRoles[roles[i]] < spawnCreepsUntil[i]) {
+                creepBelowCap = roles[i];
+                break;
+            }
+        }
+        var creepAboveCap = undefined;
+        //get missing creep above cap
+        if(creepBelowCap == undefined) {
             for(var i = 0; i < roles.length; ++i) {
-                if(getLivingCreeps(roles[i]) < maxCreepsPerRole[i]) {
-                    Memory.nextCreep = roles[i];
-                    found = true;
+                if(missingRoles[roles[i]] != undefined && missingRoles[roles[i]] < maxCreepsPerRole[i]) {
+                    creepAboveCap = roles[i];
                     break;
                 }
             }
-        }
-        if(found) break;
+            mostPriorised = creepAboveCap;
+        } else mostPriorised = creepBelowCap;
     }
+    return mostPriorised;
 }
 
-function getLivingCreeps(role) {
-    var cr = _.filter(Game.creeps, (creep) => creep.memory.role == role);
-    return cr.length;
+function createRoomCostMatrix() {
+    var fieldSize = 50;
+    var costMatrix = [];
+    for(var y = 0; y < fieldSize; ++y) {
+        costMatrix[y] = [];
+        for(var x = 0; x < fieldSize; ++x) {
+            var terrain = curRoom.lookForAt(LOOK_TERRAIN, x, y);
+            costMatrix[y][x] = getWalkMultiplier(terrain);
+        }
+    }
+    return costMatrix;
 }
 
-function getLivingCreepsNearDead(role, ticksRemaining) {
-    var cr = _.filter(Game.creeps, (creep) => creep.memory.role == role && creep.ticksToLive <= ticksRemaining);
-    return cr;
+function getWalkMultiplier(ter) {
+    var multi = undefined;
+    if(ter == 'plain') multi = 1;
+    else if(ter == 'road') multi = 0.5;
+    else if(ter == 'swamp') multi = 5;
+    else if(ter == 'wall') multi = -1;
+    return multi;
+}
+
+function getCreepSpawnAndTravelTime(role) {
+     
+    //calculate path to destination if not previously stored (and the path is valid == target not changed)
+    if(Memory.preSpawnDuration[curRoom.name][role] == undefined || Memory.preSpawnDuration[curRoom.name][role] == null) {
+        if(Memory.roomCostMatrix == undefined) Memory.roomCostMatrix = {};
+        if(Memory.roomCostMatrix[curRoom.name] == undefined) Memory.roomCostMatrix[curRoom.name] = createRoomCostMatrix();
+        
+         //recalculate Path
+        var newPath = curRoom.findPath(spawn.pos, curRoom.getPositionAt(preRespawnDestination[roleToArrayIndex(role)][0], preRespawnDestination[roleToArrayIndex(role)][1]), {ignoreCreeps: true});
+        Memory.preSpawnDuration[curRoom.name][role] = (creepBodyParts[roleToArrayIndex(role)].length * singleBodyPartSpawnTime) + ticksRequiredForPath(newPath, role);
+    }
+    return Memory.preSpawnDuration[curRoom.name][role];
+}
+
+function ticksRequiredForPath(newPath, role) {
+    //calc. how much ticks the creep will need to walk
+    //get moveparts
+    var movePartCount = 0;
+    for(var part in creepBodyParts[roleToArrayIndex(role)]) {if(part == MOVE) ++movePartCount;}
+    var ticksRequired = 0;
+    var creepFatigue = 0;
+    //simulate creep walk
+    var totalParts = creepBodyParts[roleToArrayIndex(role)];
+    var index = 0;
+    var curMulti = Memory.roomCostMatrix[curRoom.name][newPath[index].y][newPath[index].x];
+    while(index < newPath.length) {
+        //if creep can walk, go to next field and calc fatigue
+        if(creepFatigue == 0) {
+            if(++index < newPath.length) {
+                var curMulti = Memory.roomCostMatrix[curRoom.name][newPath[index].y][newPath[index].x];
+                creepFatigue = (totalParts * curMulti) - (movePartCount * 2);
+            } else {
+                ++ticksRequired;
+                break;
+            }
+        } else {
+            //decrease fatigue
+            var newFat = creepFatigue - (movePartCount * 2);
+            creepFatigue = ((newFat > 0) ? newFat : 0);
+        }
+        ++ticksRequired;
+    }
+    return ticksRequired;
+        
+}
+
+
+function getPreRespawnCreep(allCreeps) {
+
+    var preRespawnCreepsCount = {};
+    for(var cr in allCreeps) {
+        if(shouldPreRespawn[roleToArrayIndex(allCreeps[cr].memory.role)] && allCreeps[cr].ticksToLive <= getCreepSpawnAndTravelTime(allCreeps[cr].memory.role) && allCreeps[cr].memory.preRespawn == false) {
+            ((preRespawnCreepsCount[allCreeps[cr].memory.role] == undefined) ? preRespawnCreepsCount[allCreeps[cr].memory.role] = 1 : ++preRespawnCreepsCount[allCreeps[cr].memory.role]);
+            allCreeps[cr].memory.preRespawn = true;
+        }
+    }
+    
+    var mostPrio = getMostPriorizedMissingCreep(preRespawnCreepsCount);
+    return mostPrio;
+}
+
+function getCreepsAndRolesAvaliable(allCreeps) {
+    var creepsAndRolesAvaliable = {};
+    for(var i in allCreeps) {
+        if(allCreeps[i].memory != undefined && allCreeps[i].memory.role != undefined) {
+            if(creepsAndRolesAvaliable[allCreeps[i].memory.role] == undefined)
+                creepsAndRolesAvaliable[allCreeps[i].memory.role] = 1;
+            else ++creepsAndRolesAvaliable[allCreeps[i].memory.role];
+        }
+    }
+    return creepsAndRolesAvaliable;
+}
+
+function getMissingRoles(allCreeps) {
+    var avaliableCreeps = getCreepsAndRolesAvaliable(allCreeps);
+    var missingCreeps = {};
+    
+    for(var i = 0; i < maxCreepsPerRole.length; ++i) {
+        if(avaliableCreeps[roles[i]] == undefined) {
+            missingCreeps[roles[i]] = maxCreepsPerRole[i];
+        } else if(avaliableCreeps[roles[i]] < maxCreepsPerRole[i]) {
+            missingCreeps[roles[i]] = maxCreepsPerRole[i] - avaliableCreeps[roles[i]];
+        }
+    }
+    return missingCreeps;
 }
 
 function roleToArrayIndex(role) {
     for(var i = 0; i < roles.length; ++i) {
-        if(roles[i] == role)
-            return i;
+        if(roles[i] == role) return i;
     }
 }
 
