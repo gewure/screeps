@@ -1,3 +1,7 @@
+
+
+///     MAKE A NEW ROLE "DiffrentRoomHarvester"
+
 var roleHarvester = require('role.harvester');
 var roleUpgrader = require('role.upgrader');
 var roleBuilder = require('role.builder');
@@ -52,7 +56,6 @@ var minCapLinkIDs = {[myRooms[0]]: {[harvestLinkID[myRooms[0]]]: 500}};
 preRunWork();
 module.exports.loop = function () {
     runNormalState();
-   // clearDeadCreeps();
 }
 
 //if nothing special is happening run this tree. IMPLEMENT: other trees
@@ -105,14 +108,14 @@ function runNormalState() {
     }
 }
 
-function assignRolelessCreep() {
-    var roleless = _.filter(Game.creeps, (creep) => creep.memory.role == undefined);
-    if(roleless.length > 0) {
-        for(var i = 0; i < roleless.length; ++i) {
-            assignRole(roleless[i]);
-        }
-    }
-}
+// function assignRolelessCreep() {
+//     var roleless = _.filter(Game.creeps, (creep) => creep.memory.role == undefined);
+//     if(roleless.length > 0) {
+//         for(var i = 0; i < roleless.length; ++i) {
+//             assignRole(roleless[i]);
+//         }
+//     }
+// }
 
 function roleToArrayIndex(role) {
     for(var i = 0; i < roles.length; ++i) {
@@ -121,55 +124,40 @@ function roleToArrayIndex(role) {
     }
 }
 
-function assignRole(creep) {
-    var missingRole = getMissingRole();
-    if(missingRole != undefined) {
-        //die erste rolle ist die mit höchster priorität
-        creep.memory.role = missingRole;
-        creep.memory.prevX = 0; creep.memory.prevY = 0;
-    } else {
-        //mache ihn zum transporter
-        creep.memory.role = 'transporter';
-    }
-}
+// function assignRole(creep) {
+//     var missingRole = getMissingRole();
+//     if(missingRole != undefined) {
+//         //die erste rolle ist die mit höchster priorität
+//         creep.memory.role = missingRole;
+//         creep.memory.prevX = 0; creep.memory.prevY = 0;
+//     } else {
+//         //mache ihn zum transporter
+//         creep.memory.role = 'transporter';
+//     }
+// }
 
-function getMissingRole() {
-    var roleCount = [['containerHarvesterNorth'], ['transporter'], ['containerHarvesterSouth'], ['builder'], ['upgrader']];
+// function getMissingRole() {
+//     var roleCount = [['containerHarvesterNorth'], ['transporter'], ['containerHarvesterSouth'], ['builder'], ['upgrader']];
     
-    for(var i in Memory.creeps) {
-        if(Memory.creeps[i].role != undefined) {
-           var roleIndex = roleToArrayIndex(Memory.creeps[i].role);
-           if(roleCount[roleIndex][1] == undefined) {
-               roleCount[roleIndex][1] = 1;
-           } else {
-               ++roleCount[roleIndex][1];
-           }
-        }
-    }
-    var missingRole = undefined;
-    for(var i = roleCount.length - 1; i >= 0; --i) {
-        if(roleCount[i][1] > maxCreepsPerRole[roleToArrayIndex(roleCount[i][0])]) {
-            missingRole = roleCount[i][0];
-            break;
-        }
-    }
-    return missingRole;
-}
-
-function clearDeadCreeps() {
-    if(Memory.curClearCreepsTime + 1 >= clearCreepsTime && !Game.spawns.Koblach.spawning) {
-        for(var i in Memory.creeps) {
-            if(!Game.creeps[i]) {
-                delete Memory.creeps[i];
-            }
-        }
-        Memory.curClearCreepsTime = 0;
-    } else if(!Game.spawns.Koblach.spawning) {
-        ++Memory.curClearCreepsTime;
-    } else if(Game.spawns.Koblach.spawning) {
-        Memory.curClearCreepsTime = 0;
-    }
-}
+//     for(var i in Memory.creeps) {
+//         if(Memory.creeps[i].role != undefined) {
+//           var roleIndex = roleToArrayIndex(Memory.creeps[i].role);
+//           if(roleCount[roleIndex][1] == undefined) {
+//               roleCount[roleIndex][1] = 1;
+//           } else {
+//               ++roleCount[roleIndex][1];
+//           }
+//         }
+//     }
+//     var missingRole = undefined;
+//     for(var i = roleCount.length - 1; i >= 0; --i) {
+//         if(roleCount[i][1] > maxCreepsPerRole[roleToArrayIndex(roleCount[i][0])]) {
+//             missingRole = roleCount[i][0];
+//             break;
+//         }
+//     }
+//     return missingRole;
+// }
 
 function preRunWork() {
     if(Memory.curClearCreepsTime == undefined) {

@@ -45,6 +45,7 @@ var logicRespawn = {
             }
             
             if(creepToSpawn != undefined) {
+                clearDeadCreeps();
                 var creepName = spawn.createCreep(creepBodyParts[roleToArrayIndex(creepToSpawn)], undefined, {role: creepToSpawn, prevX: 0, prevY: 0, preRespawn: false, spawnRoomName: curRoom.name});
                 console.log(  ((creepName != -6) ? ('spawn creep \"' + creepName + '\" with role [' + creepToSpawn + ']') : ' lol ') );
             }
@@ -97,8 +98,10 @@ function createRoomCostMatrix() {
     for(var y = 0; y < fieldSize; ++y) {
         costMatrix[y] = [];
         for(var x = 0; x < fieldSize; ++x) {
+            var road = curRoom.lookForAt(STRUCTURE_ROAD, x, y);
             var terrain = curRoom.lookForAt(LOOK_TERRAIN, x, y);
-            costMatrix[y][x] = getWalkMultiplier(terrain);
+            
+            costMatrix[y][x] = getWalkMultiplier(((road != undefined && road != null) ? 'road' : terrain));
         }
     }
     return costMatrix;
@@ -106,9 +109,9 @@ function createRoomCostMatrix() {
 
 function getWalkMultiplier(ter) {
     var multi = undefined;
-    if(ter == 'plain') multi = 1;
-    else if(ter == 'road') multi = 0.5;
-    else if(ter == 'swamp') multi = 5;
+    if(ter == 'plain') multi = 2;
+    else if(ter == 'road') multi = 1;
+    else if(ter == 'swamp') multi = 10;
     else if(ter == 'wall') multi = -1;
     return multi;
 }
@@ -130,20 +133,40 @@ function getCreepSpawnAndTravelTime(role) {
 function ticksRequiredForPath(newPath, role) {
     //calc. how much ticks the creep will need to walk
     //get moveparts
-    var movePartCount = 0;
-    for(var part in creepBodyParts[roleToArrayIndex(role)]) {if(part == MOVE) ++movePartCount;}
-    var ticksRequired = 0;
+	
+	var movePartCount = 0;
+    var carryPartCount = 0;
+	var totalParts = creepBodyParts[roleToArrayIndex(role)];
+
+    for(var i = 0; i < totalParts.length; ++i) {
+        if(totalParts[i] == MOVE) {
+            ++movePartCount;
+        }
+    }
+    //'cause all carry parts are empty after spawn..
+    for(var i = 0; i < totalParts.length; ++i) {
+        if(totalParts[i] == CARRY) {
+            ++carryPartCount;
+        }
+    }
+	
+	var ticksRequired = 0;
     var creepFatigue = 0;
-    //simulate creep walk
-    var totalParts = creepBodyParts[roleToArrayIndex(role)];
     var index = 0;
-    var curMulti = Memory.roomCostMatrix[curRoom.name][newPath[index].y][newPath[index].x];
+    
+    //all parts exclusive move parts and empty carry parts
+    var weight = totalParts.length - (movePartCount + carryPartCount);
+    console.log('WW'+weight);
     while(index < newPath.length) {
         //if creep can walk, go to next field and calc fatigue
-        if(creepFatigue == 0) {
+        if(creepFatigue <= 0) {
             if(++index < newPath.length) {
                 var curMulti = Memory.roomCostMatrix[curRoom.name][newPath[index].y][newPath[index].x];
-                creepFatigue = (totalParts * curMulti) - (movePartCount * 2);
+                console.log(curMulti);
+                creepFatigue = (weight * curMulti) - (movePartCount * 2);
+                //creepFatigue = ((totalParts.length * curMulti) - (movePartCount * 2));
+                console.log(creepFatigue);
+                if(creepFatigue < 0) creepFatigue = 0;
             } else {
                 ++ticksRequired;
                 break;
@@ -154,9 +177,10 @@ function ticksRequiredForPath(newPath, role) {
             creepFatigue = ((newFat > 0) ? newFat : 0);
         }
         ++ticksRequired;
-    }
-    return ticksRequired;
-        
+    }  
+    
+    console.log('ticks: ' + ticksRequired +  ' pathSize: ' + newPath.length);
+    return ticksRequired;      
 }
 
 
@@ -221,5 +245,13 @@ function creepCost(bodyArray) {
         }
     }
     return buildCost;
+}
+
+function clearDeadCreeps() {
+    for(var i in Memory.creeps) {
+        if(!Game.creeps[i]) {
+            delete Memory.creeps[i];
+        }
+    }
 }
 module.exports = logicRespawn;
