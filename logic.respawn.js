@@ -28,7 +28,7 @@ var logicRespawn = {
         if(Memory.preSpawnDuration[myRoom] == undefined) Memory.preSpawnDuration[myRoom] = {};
         
         if(spawn.spawning == null) {
-            var allCreeps = curRoom.find(FIND_MY_CREEPS);
+            var allCreeps = getAllCreepsWithRoomSpawnName(curRoom.name);
             var missingRoles = getMissingRoles(allCreeps);
             var priorizedCreep = getMostPriorizedMissingCreep(missingRoles);
             var preRespawnCreep = getPreRespawnCreep(allCreeps);    
@@ -52,6 +52,16 @@ var logicRespawn = {
         }
     }
 };
+
+function getAllCreepsWithRoomSpawnName(roomNa) {
+    var cre = [];
+    for(var i in Game.creeps) {
+        if(Game.creeps[i].memory.spawnRoomName == roomNa) {
+            cre[cre.length] = Game.creeps[i];
+        }
+    }
+    return cre;
+}
 
 function getMostPriorizedMissingCreep(missingRoles) {
     var mostPriorised = undefined;

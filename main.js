@@ -12,8 +12,7 @@ var roleTransporter = require('role.transporter');
 var logicRespawn = require('logic.respawn');
 var logicLinkUpgrader = require('logic.linkSend');
 var roleSpecialAttackMelee = require('role.specialAttack-Melee');
-
-var clearCreepsTime = 50;
+var roleOtherRoomHarvester = require('role.otherRoomHarvester');
 
 var myRooms = ['E39S24'];
 var mainSpawns = {[myRooms[0]]: '576d823abe1cccb44b189dc7'};
@@ -36,24 +35,24 @@ var allied = ['Gewure'];
 //**************
 //AB HIER REIHENFOLGE DER ARRAYS WICHTIG!!! das heißt, wenn in roles ein einem raum zb. ein transporter an array position 0 steht, müssen seine eigenschaften ebenfalls am index 0 definiert werden.
 //**************
-var roles = {[myRooms[0]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader']};
-var shouldPreRespawn = {[myRooms[0]]: [true, true, true, false, true]};
-var spawnUntil = {[myRooms[0]]: [1, 1, 1, 1, 1]}; 
-var maxCreepsPerRole = {[myRooms[0]]: [1, 2, 1, 1, 1]};
+var roles = {[myRooms[0]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomHarvester']};
+var shouldPreRespawn = {[myRooms[0]]: [true, true, true, false, true, false]};
+var spawnUntil = {[myRooms[0]]: [1, 1, 1, 1, 1, 1]}; 
+var maxCreepsPerRole = {[myRooms[0]]: [1, 3, 1, 1, 1, 1]};
 var creepBodyParts =    {[myRooms[0]]: [
                                         [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
                                         [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                         [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
                                         [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                        [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
+                                        [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                        [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
                                     ]
                         };
 //{RAUM: {ROLLE: [x,y]}}; wohin der creep direkt nach dem spawnen hinläuft
-var preRespawnDestination = {[myRooms[0]]: [[28,30], [25,29], [22,41], [0,0], [8,40]]};
+var preRespawnDestination = {[myRooms[0]]: [[28,30], [25,29], [22,41], [0,0], [8,40], [0,0]]};
 //falls ein link/container immer bis zu einem cap gefüllt werden soll, hier rein ({raum: {ID: minCap}})
 var minCapLinkIDs = {[myRooms[0]]: {[harvestLinkID[myRooms[0]]]: 500}};
 
-preRunWork();
 module.exports.loop = function () {
     runNormalState();
 }
@@ -101,10 +100,10 @@ function runNormalState() {
                 roleContainerHarvester.run(creep, southSourceID[spawnRoomName], southContainerID[spawnRoomName], harvestLinkID[spawnRoomName]);
             } else if(creep.memory.role == 'specialAttack-Melee') {
                 roleSpecialAttackMelee.run(creep);
+            } else if(creep.memory.role == 'otherRoomHarvester') {
+                roleOtherRoomHarvester.run(creep, '576a9cce57110ab231d89c04', storageID[spawnRoomName]);
             }
         } 
-        // creep.memory.preRespawn = false;
-        // creep.memory.spawnRoomName = 'E39S24';
     }
 }
 
@@ -158,9 +157,3 @@ function roleToArrayIndex(role) {
 //     }
 //     return missingRole;
 // }
-
-function preRunWork() {
-    if(Memory.curClearCreepsTime == undefined) {
-        Memory.curClearCreepsTime = 0;
-    } 
-}
