@@ -1,5 +1,5 @@
 var minWallHitpoints = 500000;
-var minRampartHitpoints = 300000;
+var minRampartHitpoints = 10000;
 
 var roleTower = {
     run: function(tower) {
@@ -21,26 +21,29 @@ var roleTower = {
             
                 
             } else {
-            
-                var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
+                var closestDamagedStructure = Game.spawns.Koblach.room.find(FIND_STRUCTURES, {
                         filter: (structure) => {
-                            return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax) || 
-                                    (structure.structureType == STRUCTURE_WALL && structure.hits < minWallHitpoints)|| 
-                                    (structure.structureType == STRUCTURE_RAMPART && structure.hits < minRampartHitpoints));
+                            return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax)  
+                                    // || (structure.structureType == STRUCTURE_WALL && structure.hits < minWallHitpoints) 
+                                     || (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) 
+                                     //|| (structure.structureType == STRUCTURE_RAMPART && structure.hits < minRampartHitpoints)
+                                    );
                         }, algorithm:'dijkstra'}); 
-                
-                if(closestDamagedStructure) {
-                    tower.repair(closestDamagedStructure);
+                        
+                closestDamagedStructure.sort((a,b) => a.hits - b.hits);
+                if(closestDamagedStructure.length > 0) {
+                    tower.repair(closestDamagedStructure[getRandomInt(0, closestDamagedStructure.length - 1)]);
+                } else {
+                    
                 }
+                
             }
-        
-            
         }
     }
 }
 
-function canInflictDamage(tower, creep, activeHealParts) {
-    
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function getHealer(tower, hostileCreeps) {

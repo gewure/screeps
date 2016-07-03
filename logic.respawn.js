@@ -1,18 +1,16 @@
 //implementieren: wenn genug ressourcen vorhanden und nichts zu tun, ersetzte kleine durch größere creeps
-var roles = ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader'];
-var maxCreepsPerRole = [1, 2, 1, 1, 4];
-var creepBodyParts = [  [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
-                        [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
-                        [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
-                        [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                        [WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK, CARRY, MOVE, WORK, CARRY, MOVE]];
+var roles = [];
+var maxCreepsPerRole = [];
+var creepBodyParts = [];
 
 var maxRespawnTick = 1;
-
 var containerHarvesterPreRespawnTicks = 60;
 
 var logicRespawn = {
-    run: function() {
+    run: function(rol, maxPerRole, bodyParts) {
+        roles = rol; 
+        maxCreepsPerRole = maxPerRole; 
+        creepBodyParts = bodyParts;
         checkForRespawn();
         spawnCreeps();
     }

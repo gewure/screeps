@@ -5,7 +5,7 @@ var containerIDs = [];
 
 var idlePosX = 28;
 var idlePosY = 37;
-var containerFillFactor = 4;
+var containerFillFactor = 6;
 
 var roleBuilder = {
     /** @param {Creep} creep **/
@@ -80,6 +80,7 @@ function buildRepair(creep, target) {
 }
 
 function getClosestContainer(creep, minEnergyLimit) {
+   
     var conn = [];
     for(var i = 0; i < containerIDs.length; ++i) {
         var con = Game.getObjectById(containerIDs[i]); 

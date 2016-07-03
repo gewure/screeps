@@ -3,52 +3,54 @@
 
     a creep, that harvests a big amount, but has a low cargo (is near to container) and stores it in a container
 */
-var northSourceID = '';
-var containerNorthID = '';
-
-var southSourceID = '';
-var containerSouthID = '';
 
 var source = undefined;
 var container = undefined;
+var link = undefined;
 var untilPathRecalc = 3;
 
 var roleContainerHarvester = {
     /** @param {Creep} creep **/
-    run: function(creep, northSID, northCID, southSID, southCID) {
-        northSourceID = northSID;
-        containerNorthID = northCID;
-        southSourceID = southSID;
-        containerSouthID = southCID;
-        
+    run: function(creep, sourceID, containerID, linkID) {
+
         if(creep.memory.state == undefined) {
             creep.memory.state = 'harvest';
         }
-        if(creep.memory.role == 'containerHarvesterNorth') {
-            source = Game.getObjectById(northSourceID);
-            container = Game.getObjectById(containerNorthID);
-        } else {
-            source = Game.getObjectById(southSourceID);
-            container = Game.getObjectById(containerSouthID);
+        
+        source = Game.getObjectById(sourceID);
+        container = Game.getObjectById(containerID);
+        if(linkID != undefined) {
+            link = Game.getObjectById(linkID);
         }
 
-        //creep has no energy, go harvest
-        if(creep.carry.energy < creep.carryCapacity) {
-            creep.memory.state = 'harvest';
-            var stateChanged = hasStateChanged(creep);
-            harvestSource(creep, stateChanged);
-        //creep can't carry more, goto container if it is not full and fill
-        } else if(creep.carry.energy == creep.carryCapacity && _.sum(container.store) < container.storeCapacity) {
-           // creep.say('here');
-            creep.memory.state = 'fill';
-            var stateChanged = hasStateChanged(creep);
-            fillContainer(creep, stateChanged);
-        //container is full
-        } else if( _.sum(container.store) == container.storeCapacity) {
-            creep.memory.state = 'idle';
-            var stateChanged = hasStateChanged(creep);
+        if(creep.ticksToLive > 1) {
+            //creep has no energy, go harvest
+            if(creep.carry.energy < creep.carryCapacity) {
+                creep.memory.state = 'harvest';
+                var stateChanged = hasStateChanged(creep);
+                harvestSource(creep, stateChanged);
+            //creep can't carry more, goto container if it is not full and fill
+            } else if(linkID != undefined && creep.carry.energy == creep.carryCapacity && link.energy < link.energyCapacity) {
+                // creep.say('here');
+                creep.memory.state = 'fill';
+                var stateChanged = hasStateChanged(creep);
+                fillLink(creep, stateChanged);
+            } else if(creep.carry.energy == creep.carryCapacity && _.sum(container.store) < container.storeCapacity) {
+               // creep.say('here');
+                creep.memory.state = 'fill';
+                var stateChanged = hasStateChanged(creep);
+                fillContainer(creep, stateChanged);
+            //container is full
+            } else if( _.sum(container.store) == container.storeCapacity) {
+                creep.memory.state = 'idle';
+                var stateChanged = hasStateChanged(creep);
+            }
+            creep.memory.stateBefore = creep.memory.state;
+        } else {
+            if(linkID == undefined)
+                creep.transfer(container, RESOURCE_ENERGY);
+            else creep.transfer(link, RESOURCE_ENERGY);
         }
-        creep.memory.stateBefore = creep.memory.state;
 	}
 };
 
@@ -112,6 +114,15 @@ function hasStateChanged(creep) {
 
 function newSourcePath(creep) {
     return creep.pos.findPathTo(source, {algorithm: 'astar'});
+}
+
+function fillLink(creep, stateChanged) {
+    if(creep.transfer(link, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+        creep.moveTo(link); //TODO: replace with path
+    }
+    if(creep.pos.isNearTo(source)) {
+        creep.harvest(source);
+    }
 }
 
 function fillContainer(creep, stateChanged) {
