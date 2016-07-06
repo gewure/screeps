@@ -4,9 +4,11 @@ var minRampartHitpoints = 10000;
 var roleTower = {
     run: function(tower) {
         if(tower) {
+            
             var hostileCreeps = tower.room.find(FIND_HOSTILE_CREEPS);
            
             if(hostileCreeps.length > 0) {
+                
                 var healer = getHealer(tower, hostileCreeps);
                 if(healer) {
                     if(canInflictDamage(tower, healer[0], healer[1])) {
@@ -21,7 +23,7 @@ var roleTower = {
             
                 
             } else {
-                var closestDamagedStructure = Game.spawns.Koblach.room.find(FIND_STRUCTURES, {
+                var closestDamagedStructure = tower.room.find(FIND_STRUCTURES, {
                         filter: (structure) => {
                             return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax)  
                                     // || (structure.structureType == STRUCTURE_WALL && structure.hits < minWallHitpoints) 

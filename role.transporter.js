@@ -6,16 +6,20 @@ var reFillFactorFullContainer = 20;
 var minEnergyLimit = 0;
 var towerIDs = [];
 var minCapLinkIDs = undefined;
+var mainContainer = undefined;
+var bigStoreID = undefined;
 
 var roleTransporter = {
     
     /** @param {Creep} creep **/
-    run: function(creep, contIDs, contStorIDs, towIDs, minLinkID) {
+    run: function(creep, contIDs, contStorIDs, towIDs, minLinkID, mainCont, bigStID) {
         containerIDs = contIDs;
         containerIDsWStorage = contStorIDs;
         towerIDs = towIDs;
         minCapLinkIDs = minLinkID;
-        
+        mainContainer = mainCont;
+        bigStoreID = bigStID;
+
         if(creep.memory.state == undefined) creep.memory.state = 'fill';
         if(creep.memory.stillDistribute == undefined) creep.memory.stillDistribute = false;
         
@@ -48,13 +52,60 @@ function fillFromContainer(creep, stateChanged, activeCarryCount) {
                     }, algorithm:'dijkstra'});
     
     if(emptyExtensions.length > 0) {
-        var container = getClosestHighEnergyContainer(creep, minEnergyLimit, containerIDsWStorage);
-        if(container) {
-            if(container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                goto(creep, stateChanged, container);
-            }
+        //first check if main containers have more energy than the creep can carry, else go to big storage
+        var carryParts = getActiveBodyPartCount(creep, CARRY);
+        var closestArray = [];
+        for(var i = 0; i < containerIDs.length; ++i) {
+            var container = Game.getObjectById(containerIDs[i]); 
+            if(_.sum(container.store) > 0) 
+                closestArray[closestArray.length] = container;
         }
+        if(closestArray.length > 0) {
+            var closest = creep.pos.findClosestByRange(closestArray);
+            if(closest.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                goto(creep, stateChanged, closest);
+            }
+            
+        } else {
+            
+            var big = Game.getObjectById(bigStoreID);
+            if(big != undefined && big.store[RESOURCE_ENERGY] > 0) {
+                if(big.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    goto(creep, stateChanged, big);
+                }
+            }
+            //IDLE
+            creep.say('ELSE');
+            
+            
+            
+            
+            // var big = Game.getObjectById(bigStoreID);
+            
+            // if(big != undefined && _.sum(big.store) > 0) {
+            //     if(big.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            //         goto(creep, stateChanged, big);
+            //     }  
+            // //FAIL SAFE goto container with biggest energy amount
+            // } else {
+            //     for(var i = 0; i < mainContainer.length; ++i) {
+            //         var container = Game.getObjectById(mainContainer[i]); 
+            //         if(_.sum(container.store) > 0) 
+            //             closestArray[closestArray.length] = container;
+            //     }
+            //     if(closestArray.length > 0) {
+            //         var closest = creep.pos.findClosestByRange(closestArray);
+            //         if(closest.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            //             goto(creep, stateChanged, closest);
+            //         }
+                    
+            //     }
+            // }
+            
+        }
+            
     } else {
+
         var container = getClosestHighEnergyContainer(creep, minEnergyLimit, containerIDs);
         if(container) {
             if(container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
@@ -70,7 +121,10 @@ function distribute(creep, stateChanged, activeCarryCount) {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION ||
                                 structure.structureType == STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity;
-                    }, algorithm:'dijkstra'});           creep.memory.containerPath = undefined;
+                    }, algorithm:'dijkstra'});           
+    
+    creep.memory.containerPath = undefined;
+
 
     if(target != null) {
         var result = creep.transfer(target, RESOURCE_ENERGY);
@@ -90,11 +144,16 @@ function distribute(creep, stateChanged, activeCarryCount) {
     //transfer energy from storage to tower if tower has less energy than the transporter can carry. if tower has enough, transfere rest to big storage 
     //or fillmin cap containers
     } else {
-        var minCaps = getMinCapLinkContainer();
-        if(minCaps != undefined) {
-            fillMinCap(creep, minCaps[0], stateChanged);
-        } else {
-            checkForTowerFill(creep, stateChanged, activeCarryCount);
+        if(!checkForTowerFill(creep, stateChanged, activeCarryCount)) {
+            var minCaps = getMinCapLinkContainer();
+            var big = Game.getObjectById(bigStoreID);
+            if(minCaps != undefined) {
+                fillMinCap(creep, minCaps[0], stateChanged);
+            } else if(big != undefined) {
+                if(creep.transfer(big, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    goto(creep, stateChanged, big);
+                }
+            }
         }
     }
 }
@@ -104,13 +163,15 @@ function checkForTowerFill(creep, stateChanged, activeCarryCount) {
 
     if(closestTowerLowEnergy != null) {
         fillTower(creep, closestTowerLowEnergy, stateChanged);
+        return true;
             
-    } else if(_.sum(creep.room.storage.store) < creep.room.storage.storeCapacity) {
+    } else if(creep.room.store != undefined && _.sum(creep.room.storage.store) < creep.room.storage.storeCapacity) {
         
         if(creep.transfer(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
             goto(creep, stateChanged, creep.room.storage);
         }
     }
+    return false;
 }
 
 // falls links spezifiziert worden sind, die immer bis zu einem gewiwsen cap gefüllt sien müssen, gib sie zurück

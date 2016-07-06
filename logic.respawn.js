@@ -47,7 +47,7 @@ var logicRespawn = {
             if(creepToSpawn != undefined) {
                 clearDeadCreeps();
                 var creepName = spawn.createCreep(creepBodyParts[roleToArrayIndex(creepToSpawn)], undefined, {role: creepToSpawn, prevX: 0, prevY: 0, preRespawn: false, spawnRoomName: curRoom.name});
-                console.log(  ((creepName != -6) ? ('spawn creep \"' + creepName + '\" with role [' + creepToSpawn + ']') : ' lol ') );
+                console.log(  ((creepName != -6) ? ('spawn creep \"' + creepName + '\" with role [' + creepToSpawn + '] in room ['+curRoom.name+'] at spawn ['+spawn.name+']') : ' can\'t spawn creep while spawning another one') );
             }
         }
     }

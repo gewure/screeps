@@ -1,6 +1,5 @@
 var reHarvestFactor = 30; //if only 30 %energy are left, the creep will gather again
 var reFillFactorEmptySource = 15;
-var storageID = '';
 var containerIDs = [];
 
 var idlePosX = 28;
@@ -9,9 +8,11 @@ var containerFillFactor = 6;
 
 var roleBuilder = {
     /** @param {Creep} creep **/
-    run: function(creep, storID, contIDs) {
-        storageID = storID;
+    run: function(creep, storID, contIDs, containerFillFac) {
         containerIDs = contIDs;
+        containerFillFactor = containerFillFac;
+        // var idlePosX = idleX;
+        // var idlePosY = idleY;
         
         preCheckStates(creep);
 	    if(creep.memory.building) {

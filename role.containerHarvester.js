@@ -38,14 +38,14 @@ var roleContainerHarvester = {
                 var stateChanged = hasStateChanged(creep);
                 fillContainer(creep, stateChanged, notFullContainer);
             //container is full
-            } else if( _.sum(container.store) == container.storeCapacity) {
+            } else if(notFullContainer == undefined) {
                 creep.memory.state = 'idle';
                 var stateChanged = hasStateChanged(creep);
             }
             creep.memory.stateBefore = creep.memory.state;
         } else {
             if(linkID == undefined)
-                creep.transfer(container, RESOURCE_ENERGY);
+                creep.transfer(notFullContainer, RESOURCE_ENERGY);
             else creep.transfer(link, RESOURCE_ENERGY);
         }
 	}

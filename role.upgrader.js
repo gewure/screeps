@@ -1,19 +1,26 @@
-var containerID = '';
+var containerID = undefined;
+var linkID = undefined;
 var container = undefined;
+var link = undefined;
+var reFillTarget = undefined;
 var untilPathRecalc = 2;
 var nearDeadTicksEnergyReduce = 5;
 
 var roleUpgrader = {
     
     /** @param {Creep} creep **/
-    run: function(creep, contID) {
+    run: function(creep, contID, linID) {
         containerID = contID;
+        linkID = linID;
         if(creep.memory.nearDead == undefined) creep.memory.nearDead = false;
         if(creep.memory.state == undefined) creep.memory.state = 'fill';
         if(creep.memory.stillWork == undefined) creep.memory.stillWork = false;
         if(creep.memory.filledNearDead == undefined) creep.memory.filledNearDead = false;
         
         container = Game.getObjectById(containerID);
+        link = Game.getObjectById(linkID);
+        
+        reFillTarget = ((container != undefined) ? container : link);
         
         //creep can't carry more, goto controller
         if(creep.carry.energy == creep.carryCapacity || creep.memory.stillWork || (creep.memory.nearDead && creep.memory.filledNearDead)) {
@@ -44,17 +51,22 @@ var roleUpgrader = {
 };
 
 function fillFromContainer(creep, stateChanged, energyAmount) {
-    if(container.energy > 0) {
-        if(creep.pos.isNearTo(container)) {
-            var result = container.transferEnergy(creep, energyAmount - creep.carry.energy);
+    if((reFillTarget.energy != undefined && reFillTarget.energy > 0) || (reFillTarget.store != undefined && reFillTarget.store[RESOURCE_ENERGY] > 0)) {
+        if(creep.pos.isNearTo(reFillTarget)) {
+            var result = undefined;
+            try {
+                result = reFillTarget.transferEnergy(creep, energyAmount - creep.carry.energy);
+            } catch(err) {
+                result = reFillTarget.transfer(creep, RESOURCE_ENERGY, energyAmount - creep.carry.energy);
+            }
             if(creep.memory.nearDead)
                 creep.memory.filledNearDead = true;
-        } else goto(creep, stateChanged, container);
+        } else goto(creep, stateChanged, reFillTarget);
 
     //idle to reduce cpu load  
     } else {
-        if(!creep.pos.isNearTo(container)) {
-            goto(creep, stateChanged, container);
+        if(!creep.pos.isNearTo(reFillTarget)) {
+            goto(creep, stateChanged, reFillTarget);
         }
     }
 }
@@ -116,7 +128,7 @@ function upgradeContr(creep, stateChanged) {
         goto(creep, stateChanged, creep.room.controller);
 
     //delete this part to allow more than one upgrader to get energy from the container/link
-    } else if(result == OK) {
+    } else if(link != undefined && result == OK) {
         var energyAmount = 0;
         var activeWorkParts = getActiveBodyPartCount(creep, WORK);
         if(creep.ticksToLive < nearDeadTicksEnergyReduce) {
