@@ -55,8 +55,8 @@ function fillFromContainer(creep, stateChanged, activeCarryCount) {
         //first check if main containers have more energy than the creep can carry, else go to big storage
         var carryParts = getActiveBodyPartCount(creep, CARRY);
         var closestArray = [];
-        for(var i = 0; i < containerIDs.length; ++i) {
-            var container = Game.getObjectById(containerIDs[i]); 
+        for(var i = 0; i < mainContainer.length; ++i) {
+            var container = Game.getObjectById(mainContainer[i]); 
             if(_.sum(container.store) > 0) 
                 closestArray[closestArray.length] = container;
         }
@@ -75,7 +75,6 @@ function fillFromContainer(creep, stateChanged, activeCarryCount) {
                 }
             }
             //IDLE
-            creep.say('ELSE');
             
             
             
@@ -105,8 +104,13 @@ function fillFromContainer(creep, stateChanged, activeCarryCount) {
         }
             
     } else {
-
-        var container = getClosestHighEnergyContainer(creep, minEnergyLimit, containerIDs);
+        var arr = undefined;
+        if(minCapLinkIDs != undefined) {
+            arr = containerIDs;
+        } else {
+            arr = mainContainer;
+        }
+        var container = getClosestHighEnergyContainer(creep, minEnergyLimit, arr);
         if(container) {
             if(container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 goto(creep, stateChanged, container);

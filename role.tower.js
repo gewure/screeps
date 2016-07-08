@@ -1,10 +1,9 @@
-var minWallHitpoints = 500000;
+var minWallHitpoints = 10000;
 var minRampartHitpoints = 10000;
 
 var roleTower = {
     run: function(tower) {
         if(tower) {
-            
             var hostileCreeps = tower.room.find(FIND_HOSTILE_CREEPS);
            
             if(hostileCreeps.length > 0) {
@@ -23,18 +22,29 @@ var roleTower = {
             
                 
             } else {
-                var closestDamagedStructure = tower.room.find(FIND_STRUCTURES, {
-                        filter: (structure) => {
-                            return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax)  
-                                    // || (structure.structureType == STRUCTURE_WALL && structure.hits < minWallHitpoints) 
-                                     || (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) 
-                                     //|| (structure.structureType == STRUCTURE_RAMPART && structure.hits < minRampartHitpoints)
-                                    );
-                        }, algorithm:'dijkstra'}); 
-                        
-                closestDamagedStructure.sort((a,b) => a.hits - b.hits);
-                if(closestDamagedStructure.length > 0) {
-                    tower.repair(closestDamagedStructure[getRandomInt(0, closestDamagedStructure.length - 1)]);
+                var damagedStructure = undefined;
+                if(tower.id == '577b3efaa9d003b87ba8e26d') {
+                    damagedStructure = tower.room.find(FIND_STRUCTURES, {
+                            filter: (structure) => {
+                                return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax)  
+                                         || (structure.structureType == STRUCTURE_WALL && structure.hits < minWallHitpoints) 
+                                         || (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) 
+                                         || (structure.structureType == STRUCTURE_RAMPART && structure.hits < minRampartHitpoints)
+                                        );
+                            }, algorithm:'dijkstra'}); 
+                } else {
+                    damagedStructure = tower.room.find(FIND_STRUCTURES, {
+                            filter: (structure) => {
+                                return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax)  
+                                        // || (structure.structureType == STRUCTURE_WALL && structure.hits < minWallHitpoints) 
+                                         //|| (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) 
+                                         //|| (structure.structureType == STRUCTURE_RAMPART && structure.hits < minRampartHitpoints)
+                                        );
+                            }, algorithm:'dijkstra'}); 
+                }
+                damagedStructure.sort((a,b) => a.hits - b.hits);
+                if(damagedStructure.length > 0) {
+                    tower.repair(damagedStructure[0]);
                 } else {
                     
                 }

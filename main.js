@@ -9,10 +9,7 @@ var logicRespawn = require('logic.respawn');
 var logicLinkUpgrader = require('logic.linkSend');
 var roleSpecialAttackMelee = require('role.specialAttack-Melee');
 var roleOtherRoomHarvester = require('role.otherRoomHarvester');
-var roleClaimer = require('role.claimer');
-var roleInitialBuilder = require('role.initialBuilder');
-var roleOtherRoomUpgrader = require('role.otherRoomUpgrader');
-var roleOtherRoomTransporter = require('role.otherRoomTransporter');
+var roleMineralHarvester = require('role.mineralHarvester');
 
 var myRooms = ['E39S24', 'E39S23'];
 var mainSpawns = {
@@ -34,23 +31,23 @@ var northContainerID = {
 };
 var southContainerID = {        
                                 [myRooms[0]]: ['5770b7ece2a9e041522a21a9','577951f78687b175407aecf4'],
-                                [myRooms[1]]: ['577bceae16abb6a8029cb40d']
+                                [myRooms[1]]: ['577bceae16abb6a8029cb40d', '577c84e044995c890e834632']
 };
 var storageID = {               
-                                [myRooms[0]]: '5772838880db66a6420cf328'
-                                //,[myRooms[1]]: undefined
+                                [myRooms[0]]: '5772838880db66a6420cf328',
+                                [myRooms[1]]: '577f3a36bab570293b0f6a89'
 };
 var transporterMainContainer = {
                                 [myRooms[0]]: [ [northContainerID[myRooms[0]][0]], [northContainerID[myRooms[0]][1]]],
-                                [myRooms[1]]: [ [northContainerID[myRooms[1]][0]]]
+                                [myRooms[1]]: [ [northContainerID[myRooms[1]][0]], [northContainerID[myRooms[1]][1]]]
 };
 var containerIDs = {            
                                 [myRooms[0]]: [ [northContainerID[myRooms[0]][0]], [northContainerID[myRooms[0]][1]], [southContainerID[myRooms[0]][0]], [southContainerID[myRooms[0]][1]]],
-                                [myRooms[1]]: [ [northContainerID[myRooms[1]][0]], [southContainerID[myRooms[1]][0]]]
+                                [myRooms[1]]: [ [northContainerID[myRooms[1]][0]], [southContainerID[myRooms[1]][0]], [northContainerID[myRooms[1]][1]], [southContainerID[myRooms[1]][1]]]
 }; //IF more energy is required, add id of secont harvest container
 var containerAndStorageIDs = {  
                                 [myRooms[0]]: [[northContainerID[myRooms[0]][0]], [northContainerID[myRooms[0]][1]], [southContainerID[myRooms[0]][0]], [southContainerID[myRooms[0]][1]], storageID[myRooms[0]]],
-                                [myRooms[1]]: [[northContainerID[myRooms[1]][0]], [northContainerID[myRooms[1]][1]], [southContainerID[myRooms[1]][0]]]
+                                [myRooms[1]]: [[northContainerID[myRooms[1]][0]], [northContainerID[myRooms[1]][1]], [southContainerID[myRooms[1]][0]], [southContainerID[myRooms[1]][1]], storageID[myRooms[1]]]
 };
 var towerIDs = {                
                                 [myRooms[0]]: ['576f44f45ab22ea71eb7bf36', '577498bad263b01f305db4ea'],
@@ -67,41 +64,42 @@ var allied = ['Gewure'];
 //AB HIER REIHENFOLGE DER ARRAYS WICHTIG!!! das heißt, wenn in roles ein einem raum zb. ein transporter an array position 0 steht, müssen seine eigenschaften ebenfalls am index 0 definiert werden.
 //**************
 var roles = {
-                [myRooms[0]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomTransporter'],
-                [myRooms[1]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader']
+                [myRooms[0]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomHarvester'],
+                [myRooms[1]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomHarvester']
 };
 var shouldPreRespawn = {
                             [myRooms[0]]: [true, true, true, false, true, false],
-                            [myRooms[1]]: [true, true, true, false, true]
+                            [myRooms[1]]: [true, true, true, false, true, false]
 };
 var spawnUntil = {      
                             [myRooms[0]]: [1, 2, 1, 1, 1, 1],
-                            [myRooms[1]]: [1, 2, 1, 3, 3]
+                            [myRooms[1]]: [1, 1, 1, 1, 1, 1]
 }; 
 var maxCreepsPerRole = {    
-                            [myRooms[0]]: [1, 3, 1, 1, 1, 3],
-                            [myRooms[1]]: [1, 2, 1, 4, 3]
+                            [myRooms[0]]: [1, 2, 1, 1, 1, 3],
+                            [myRooms[1]]: [1, 2, 1, 2, 2, 3]
 };
 var creepBodyParts =    {   [myRooms[0]]:   [
                                             [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
                                             [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                             [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
-                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
-                                            [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
+                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
                                             ],
                             [myRooms[1]]:   [
                                             [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
                                             [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                             [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
-                                            [WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE], 
-                                            [WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE]
+                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
+                                            [WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
                                             ]
                         };
 //{RAUM: {ROLLE: [x,y]}}; wohin der creep direkt nach dem spawnen hinläuft
 var preRespawnDestination = {
                             [myRooms[0]]: [[28,30], [25,29], [22,41], [0,0], [8,40], [0,0]],
-                            [myRooms[1]]: [[45,31], [41,20], [43,11], [0,0], [42,13]]
+                            [myRooms[1]]: [[45,31], [41,20], [43,11], [0,0], [42,13], [0,0]]
 };
 //falls ein link/container immer bis zu einem cap gefüllt werden soll, hier rein ({raum: {ID: minCap}})
 var minCapLinkIDs = {       
@@ -112,14 +110,32 @@ var containerFillFactor = {
                             [myRooms[1]]: 1
 };
 
+var builderIdlePos = {
+                            [myRooms[0]]: [28, 37],  
+                            [myRooms[1]]: [33, 23]
+};
+
+var distanceHarvesterSources = {
+                            [myRooms[0]]: '576a9cce57110ab231d89c04', 
+                            [myRooms[1]]: '576a9cd857110ab231d89d06'
+};
+var distanceHarvesterSourceFlags = {
+                            [myRooms[0]]: Game.flags.koblachHarvestSource.name, 
+                            [myRooms[1]]: Game.flags.rankweilHarvestSource.name
+};
+
 module.exports.loop = function () {
+    clearDeadCreeps();
     runNormalState();
+}
+
+function test() {
+
+    
 }
 
 //if nothing special is happening run this tree. IMPLEMENT: other trees
 function runNormalState() {
-    
-  //  assignRolelessCreep();
     
     for(var i = 0; i < myRooms.length; ++i) {
      //   console.log(i);
@@ -148,92 +164,42 @@ function runNormalState() {
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
         var spawnRoomName = creep.memory.spawnRoomName;
-        if(creep.memory.role != undefined) {
-            if(creep.memory.role == 'harvester') {
-             roleHarvester.run(creep);
-            } else if(creep.memory.role == 'upgrader') {
-                if(creep.memory.spawnRoomName == myRooms[0])
-                    roleUpgrader.run(creep, southContainerID[spawnRoomName], upgraderLinkID[spawnRoomName]);
-                else if(creep.memory.spawnRoomName == myRooms[1])
-                    roleUpgrader.run(creep, southContainerID[spawnRoomName]);
-            } else if(creep.memory.role == 'builder') {
-                 roleBuilder.run(creep, storageID[spawnRoomName], containerAndStorageIDs[spawnRoomName], containerFillFactor[spawnRoomName]);
-            } else if(creep.memory.role == 'melee') {
-                roleMelee.run(creep);
-            } else if(creep.memory.role == 'transporter') {
-                roleTransporter.run(creep, containerIDs[spawnRoomName], containerAndStorageIDs[spawnRoomName], towerIDs[spawnRoomName], minCapLinkIDs[spawnRoomName], transporterMainContainer[spawnRoomName], storageID[spawnRoomName]);
-            } else if(creep.memory.role == 'containerHarvesterNorth') {
-                roleContainerHarvester.run(creep, northSourceID[spawnRoomName], northContainerID[spawnRoomName], undefined);
-            } else if(creep.memory.role == 'containerHarvesterSouth') {
-                roleContainerHarvester.run(creep, southSourceID[spawnRoomName], southContainerID[spawnRoomName], harvestLinkID[spawnRoomName]);
-            } else if(creep.memory.role == 'specialAttack-Melee') {
-                roleSpecialAttackMelee.run(creep);
-            } else if(creep.memory.role == 'otherRoomHarvester') {
-                roleOtherRoomHarvester.run(creep, '576a9cce57110ab231d89c04', storageID[spawnRoomName], Game.flags.harvesterEntrance.name, Game.flags.harvesterExit.name);
-            } else if(creep.memory.role == 'otherRoomHarvesterRankweil') {
-                roleOtherRoomHarvester.run(creep, '576a9cd857110ab231d89d08', storageID[spawnRoomName], Game.flags.toRankweil.name, Game.flags.toKoblach.name);
-            } else if(creep.memory.role == 'otherRoomHarvesterRankweilSouth') {
-                roleOtherRoomHarvester.run(creep, '576a9cd857110ab231d89d0a', storageID[spawnRoomName], Game.flags.toRankweil.name, Game.flags.toKoblach.name);
-            } else if(creep.memory.role == 'claimer') {
-                roleClaimer.run(creep);
-            } else if(creep.memory.role == 'initialBuilder') {
-                roleInitialBuilder.run(creep, Game.flags.toRankweil.name, Game.flags.toKoblach.name, storageID[spawnRoomName]);
-            } else if(creep.memory.role == 'otherRoomUpgrader') {
-                roleOtherRoomUpgrader.run(creep, Game.flags.toRankweil.name, Game.flags.toKoblach.name, storageID[spawnRoomName]);
-            } else if(creep.memory.role == 'otherRoomTransporter') {
-                roleOtherRoomTransporter.run(creep, Game.flags.toRankweil.name, Game.flags.toKoblach.name, storageID[spawnRoomName], containerAndStorageIDs[myRooms[1]]);
-            }
-        } 
+        var spawn = Game.getObjectById(mainSpawns[spawnRoomName]);
+         if(spawn.spawning == null || (spawn.spawning != null && spawn.spawning.name != name)) { //if this creep is not spawning
+            if(creep.memory.role != undefined) {
+                if(creep.memory.role == 'harvester') {
+                 roleHarvester.run(creep);
+                } else if(creep.memory.role == 'upgrader') {
+                    if(creep.memory.spawnRoomName == myRooms[0])
+                        roleUpgrader.run(creep, southContainerID[spawnRoomName], upgraderLinkID[spawnRoomName]);
+                    else if(creep.memory.spawnRoomName == myRooms[1])
+                        roleUpgrader.run(creep, southContainerID[spawnRoomName]);
+                } else if(creep.memory.role == 'builder') {
+                     roleBuilder.run(creep, storageID[spawnRoomName], containerAndStorageIDs[spawnRoomName], containerFillFactor[spawnRoomName], builderIdlePos[spawnRoomName][0], builderIdlePos[spawnRoomName][1]);
+                } else if(creep.memory.role == 'melee') {
+                    roleMelee.run(creep);
+                } else if(creep.memory.role == 'transporter') {
+                    roleTransporter.run(creep, containerIDs[spawnRoomName], containerAndStorageIDs[spawnRoomName], towerIDs[spawnRoomName], minCapLinkIDs[spawnRoomName], transporterMainContainer[spawnRoomName], storageID[spawnRoomName]);
+                } else if(creep.memory.role == 'containerHarvesterNorth') {
+                    roleContainerHarvester.run(creep, northSourceID[spawnRoomName], northContainerID[spawnRoomName], undefined);
+                } else if(creep.memory.role == 'containerHarvesterSouth') {
+                    roleContainerHarvester.run(creep, southSourceID[spawnRoomName], southContainerID[spawnRoomName], harvestLinkID[spawnRoomName]);
+                } else if(creep.memory.role == 'mineralHarvester') {
+                    roleMineralHarvester.run(creep, '577ca559b556d7683da9f635', ['577c993cb3a06602076bd71e'], undefined, '576a9d5b7f58551641fcb95b');
+                } else if(creep.memory.role == 'specialAttack-Melee') {
+                    roleSpecialAttackMelee.run(creep);
+                } else if(creep.memory.role == 'otherRoomHarvester') {
+                    roleOtherRoomHarvester.run(creep, distanceHarvesterSources[spawnRoomName], storageID[spawnRoomName], distanceHarvesterSourceFlags[spawnRoomName]);
+                }
+            } 
+        }
     }
 }
 
-// function assignRolelessCreep() {
-//     var roleless = _.filter(Game.creeps, (creep) => creep.memory.role == undefined);
-//     if(roleless.length > 0) {
-//         for(var i = 0; i < roleless.length; ++i) {
-//             assignRole(roleless[i]);
-//         }
-//     }
-// }
-
-function roleToArrayIndex(role) {
-    for(var i = 0; i < roles.length; ++i) {
-        if(roles[i] == role)
-            return i;
+function clearDeadCreeps() {
+    for(var i in Memory.creeps) {
+        if(!Game.creeps[i]) {
+            delete Memory.creeps[i];
+        }
     }
 }
-
-// function assignRole(creep) {
-//     var missingRole = getMissingRole();
-//     if(missingRole != undefined) {
-//         //die erste rolle ist die mit höchster priorität
-//         creep.memory.role = missingRole;
-//         creep.memory.prevX = 0; creep.memory.prevY = 0;
-//     } else {
-//         //mache ihn zum transporter
-//         creep.memory.role = 'transporter';
-//     }
-// }
-
-// function getMissingRole() {
-//     var roleCount = [['containerHarvesterNorth'], ['transporter'], ['containerHarvesterSouth'], ['builder'], ['upgrader']];
-    
-//     for(var i in Memory.creeps) {
-//         if(Memory.creeps[i].role != undefined) {
-//           var roleIndex = roleToArrayIndex(Memory.creeps[i].role);
-//           if(roleCount[roleIndex][1] == undefined) {
-//               roleCount[roleIndex][1] = 1;
-//           } else {
-//               ++roleCount[roleIndex][1];
-//           }
-//         }
-//     }
-//     var missingRole = undefined;
-//     for(var i = roleCount.length - 1; i >= 0; --i) {
-//         if(roleCount[i][1] > maxCreepsPerRole[roleToArrayIndex(roleCount[i][0])]) {
-//             missingRole = roleCount[i][0];
-//             break;
-//         }
-//     }
-//     return missingRole;
-// }

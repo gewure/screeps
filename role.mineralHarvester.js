@@ -8,31 +8,37 @@ var source = undefined;
 var containers = undefined;
 var link = undefined;
 var untilPathRecalc = 3;
+var mineralID = undefined;
+var mineral = undefined;
+var mineralTyp = undefined;
 
-var roleContainerHarvester = {
+var roleMineralHarvester = {
     /** @param {Creep} creep **/
-    run: function(creep, sourceID, containerIDs, linkID) {
+    run: function(creep, sourceID, containerIDs, linkID, minerID) {
 
         if(creep.memory.state == undefined) creep.memory.state = 'harvest';
         if(linkID != undefined) link = Game.getObjectById(linkID);
         source = Game.getObjectById(sourceID);
+        mineralID = minerID;
+        mineral = Game.getObjectById(mineralID);
+            console.log(creep.carry[RESOURCE_LEMERGIUM]);
         containers = [];
         for(var i = 0; i < containerIDs.length; ++i) containers[containers.length] = Game.getObjectById(containerIDs[i]);
-    
+        
         var notFullContainer = getNotFullContainer();
         if(creep.ticksToLive > 1) {
             //creep has no energy, go harvest
-            if(creep.carry.energy < creep.carryCapacity) {
+            if(creep.carry[mineral.mineralType] == undefined || creep.carry[mineral.mineralType] < creep.carryCapacity) {
                 creep.memory.state = 'harvest';
                 var stateChanged = hasStateChanged(creep);
                 harvestSource(creep, stateChanged);
             //creep can't carry more, goto container if it is not full and fill
-            } else if(linkID != undefined && creep.carry.energy == creep.carryCapacity && link.energy < link.energyCapacity) {
+            } else if(linkID != undefined && creep.carry[mineral.mineralType] == creep.carryCapacity && link.energy < link.energyCapacity) {
                 // creep.say('here');
                 creep.memory.state = 'fill';
                 var stateChanged = hasStateChanged(creep);
                 fillLink(creep, stateChanged);
-            } else if(creep.carry.energy == creep.carryCapacity && notFullContainer != undefined) {
+            } else if(creep.carry[mineral.mineralType] == creep.carryCapacity && notFullContainer != undefined) {
                // creep.say('here');
                 creep.memory.state = 'fill';
                 var stateChanged = hasStateChanged(creep);
@@ -45,23 +51,22 @@ var roleContainerHarvester = {
             creep.memory.stateBefore = creep.memory.state;
         } else {
             if(linkID == undefined)
-                creep.transfer(notFullContainer, RESOURCE_ENERGY);
+                creep.transfer(notFullContainer, mineral.mineralType);
             else creep.transfer(link, RESOURCE_ENERGY);
         }
 	}
 };
 
 function harvestSource(creep, stateChanged) {
-
-    if(source.energy > 0) {
-      if(creep.harvest(source) == ERR_NOT_IN_RANGE) {
+    if(mineral.mineralAmount > 0) {
+      if(creep.harvest(mineral) == ERR_NOT_IN_RANGE) {
         gotoSource(creep, stateChanged);
       }
       
     //idle to reduce cpu load  
     } else {
-        if(!creep.pos.isNearTo(source)) {
-            creep.moveTo(source);
+        if(!creep.pos.isNearTo(mineral)) {
+            creep.moveTo(mineral);
         }
     }
 }
@@ -76,7 +81,6 @@ function gotoSource(creep, stateChanged) {
     if((gotoResult = creep.moveByPath(creep.memory.sourcePath)) != -11) {
         //if path is blocked, count
         if(creep.pos.x == creep.memory.prevX && creep.pos.y == creep.memory.prevY) {
-                      creep.say('X');
 
             if(creep.memory.pathRecalcCount == undefined) {
                 creep.memory.pathRecalcCount = 0;
@@ -102,24 +106,24 @@ function hasStateChanged(creep) {
 }
 
 function newSourcePath(creep) {
-    return creep.pos.findPathTo(source, {algorithm: 'astar'});
+    return creep.pos.findPathTo(mineral, {algorithm: 'astar'});
 }
 
 function fillLink(creep, stateChanged) {
     if(creep.transfer(link, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
         creep.moveTo(link); //TODO: replace with path
     }
-    if(creep.pos.isNearTo(source)) {
-        creep.harvest(source);
+    if(creep.pos.isNearTo(mineral)) {
+        creep.harvest(mineral);
     }
 }
 
 function fillContainer(creep, stateChanged, cont) {
-    if(creep.transfer(cont, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+    if(creep.transfer(cont, mineral.mineralType) == ERR_NOT_IN_RANGE) {
         creep.moveTo(cont); //TODO: replace with path
     }
-    if(creep.pos.isNearTo(source)) {
-        creep.harvest(source);
+    if(creep.pos.isNearTo(mineral)) {
+        creep.harvest(mineral);
     }
 }
 
@@ -135,4 +139,4 @@ function getNotFullContainer() {
     return notFull;
 }
 
-module.exports = roleContainerHarvester;
+module.exports = roleMineralHarvester;

@@ -2,17 +2,17 @@ var reHarvestFactor = 30; //if only 30 %energy are left, the creep will gather a
 var reFillFactorEmptySource = 15;
 var containerIDs = [];
 
-var idlePosX = 28;
-var idlePosY = 37;
+var idlePosX = undefined;
+var idlePosY = undefined;
 var containerFillFactor = 6;
 
 var roleBuilder = {
     /** @param {Creep} creep **/
-    run: function(creep, storID, contIDs, containerFillFac) {
+    run: function(creep, storID, contIDs, containerFillFac, idleX, idleY) {
         containerIDs = contIDs;
         containerFillFactor = containerFillFac;
-        // var idlePosX = idleX;
-        // var idlePosY = idleY;
+        idlePosX = idleX;
+        idlePosY = idleY;
         
         preCheckStates(creep);
 	    if(creep.memory.building) {
@@ -138,7 +138,10 @@ function sourceState(creep) {
 
 function searchNewTarget(creep) {
     
-    var constructionSite = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {algorithm:'dijkstra'});
+    var constructionSite = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, 
+    {
+        //filter: (structure) => {return (structure.structureType != STRUCTURE_TERMINAL);},
+    algorithm:'dijkstra'});
 	
 	if(constructionSite) {    
     	creep.memory.tempWorksite = constructionSite.id;

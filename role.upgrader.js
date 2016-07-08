@@ -51,13 +51,18 @@ var roleUpgrader = {
 };
 
 function fillFromContainer(creep, stateChanged, energyAmount) {
-    if((reFillTarget.energy != undefined && reFillTarget.energy > 0) || (reFillTarget.store != undefined && reFillTarget.store[RESOURCE_ENERGY] > 0)) {
+    
+    if(linkID == undefined) {
+        reFillTarget = getClosestContainer(creep, 0);
+    }
+    
+    if(reFillTarget != undefined && ((reFillTarget.energy != undefined && reFillTarget.energy > 0) || (reFillTarget.store != undefined && reFillTarget.store[RESOURCE_ENERGY] > 0))) {
         if(creep.pos.isNearTo(reFillTarget)) {
             var result = undefined;
             try {
-                result = reFillTarget.transferEnergy(creep, energyAmount - creep.carry.energy);
+                result = reFillTarget.transferEnergy(creep);
             } catch(err) {
-                result = reFillTarget.transfer(creep, RESOURCE_ENERGY, energyAmount - creep.carry.energy);
+                result = reFillTarget.transfer(creep, RESOURCE_ENERGY);
             }
             if(creep.memory.nearDead)
                 creep.memory.filledNearDead = true;
@@ -65,7 +70,7 @@ function fillFromContainer(creep, stateChanged, energyAmount) {
 
     //idle to reduce cpu load  
     } else {
-        if(!creep.pos.isNearTo(reFillTarget)) {
+        if(reFillTarget != undefined && !creep.pos.isNearTo(reFillTarget)) {
             goto(creep, stateChanged, reFillTarget);
         }
     }
@@ -109,6 +114,18 @@ function getActiveBodyPartCount(creep, part) {
         }
     }
     return carryPartsCount;
+}
+
+function getClosestContainer(creep, minEnergyLimit) {
+    var conn = [];
+    for(var i = 0; i < containerID.length; ++i) {
+        var con = Game.getObjectById(containerID[i]); 
+        if(con.store[RESOURCE_ENERGY] > minEnergyLimit) {
+            conn[conn.length] = Game.getObjectById(containerID[i]);
+        }
+    }
+    var closest = creep.pos.findClosestByRange(conn);
+    return closest;
 }
 
 function hasStateChanged(creep) {
