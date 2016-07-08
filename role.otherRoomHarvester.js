@@ -35,12 +35,17 @@ var roleOtherRoomHarvester = {
     }
 };
 
+function isCreepAtEdge(creep) {
+    if (creep.pos.x == 0 || creep.pos.x == 49 || creep.pos.y == 0 || creep.pos.y == 49) return true;
+    else return false;
+}
+
 function goto(creep, stateChanged, target) {
     // if room changed, recalc
     if(creep.memory.roomBefore == undefined) creep.memory.roomBefore = creep.room.name;
     
     var tempPath = undefined;
-    if(creep.memory.roomBefore != creep.room.name) {
+    if(isCreepAtEdge(creep)) {
         creep.moveTo(roomChangeDirection(creep, creep.room.name));
         creep.memory.path = undefined;
         //console.log('move direction: ' + roomChangeDirection(creep.pos.x - creep.memory.prevX, creep.pos.y - creep.memory.prevY) + ' for creep: [' + creep.name + ']');
