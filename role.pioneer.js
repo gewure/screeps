@@ -54,8 +54,6 @@ function preCheckStates(creep) {
 	    creep.memory.building = true;
 	    searchNewTarget(creep);
 	}
-		    console.log(creep.memory.tempWorksite);
-
 }
 
 function isCreepAtEdge(creep) {
@@ -104,7 +102,7 @@ function buildingState(creep) {
         //if target is finished search a new location
         if(target.hits - target.hitsMax == 0) {
             creep.memory.building = false;
-            if(creep.carry.energy > ((creep.carryCapacity / 100) * reHarvestFactor)) {
+            if(creep.carry.energy > 0) {
                 creep.memory.researchLoc = true;
             }
         //if not finished, proceed with build/repair
@@ -145,13 +143,13 @@ function searchNewTarget(creep) {
 	} else {
 	        
         var lowLifeTargets = creep.room.find(FIND_STRUCTURES, {
-            filter: (object) => {return (object.hits < object.hitsMax && object.structureType != STRUCTURE_ROAD);}, algorithm:'dijkstra'
+            filter: (object) => {return (object.hits < object.hitsMax && object.structureType == STRUCTURE_ROAD);}, algorithm:'dijkstra'
             });
         
         lowLifeTargets.sort((a,b) => a.hits - b.hits);
         
         if(lowLifeTargets.length > 0) {
-            creep.memory.tempWorksite = lowLifeTargets[0].id;
+            creep.memory.tempWorksite = creep.pos.findClosestByPath(lowLifeTargets).id;
         }
         
     }

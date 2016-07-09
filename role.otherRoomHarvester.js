@@ -22,7 +22,8 @@ var roleOtherRoomHarvester = {
             if(creep.carry.energy < creep.carryCapacity && creep.ticksToLive > 80) {
                 creep.memory.state = 'harvest';
                 var sou = Game.getObjectById(sourceID);
-                if(creep.harvest(sou) == ERR_NOT_IN_RANGE) {
+                var res = undefined;
+                if((res = creep.harvest(sou)) == ERR_NOT_IN_RANGE || res == ERR_NOT_ENOUGH_RESOURCES) {
                     goto(creep, hasStateChanged(creep), sou);
                 }
             //walk back

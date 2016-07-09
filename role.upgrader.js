@@ -19,7 +19,6 @@ var roleUpgrader = {
         
         container = Game.getObjectById(containerID);
         link = Game.getObjectById(linkID);
-        
         reFillTarget = ((container != undefined) ? container : link);
         
         //creep can't carry more, goto controller

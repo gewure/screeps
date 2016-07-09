@@ -55,8 +55,8 @@ var towerIDs = {
                                 [myRooms[0]]: ['576f44f45ab22ea71eb7bf36', '577498bad263b01f305db4ea'],
                                 [myRooms[1]]: ['577b3efaa9d003b87ba8e26d']
 };
-var harvestLinkID = {[myRooms[0]]: '577484b08bf1541b4fc49eb5'};
-var upgraderLinkID = {[myRooms[0]]: '57748e0ad11ec119099d8d36'};
+var harvestLinkID = {[myRooms[0]]: '577484b08bf1541b4fc49eb5', [myRooms[1]]: '5780799a7f2974507bad14cc'};
+var upgraderLinkID = {[myRooms[0]]: '57748e0ad11ec119099d8d36', [myRooms[1]]: '5780775c3ca365ec6dbbae20'};
 
 var allied = ['Gewure'];
 
@@ -79,15 +79,15 @@ var spawnUntil = {
 }; 
 var maxCreepsPerRole = {    
                             [myRooms[0]]: [1, 2, 1, 1, 1, 4, 1, 1],
-                            [myRooms[1]]: [1, 2, 1, 2, 2, 4, 1, 1]
+                            [myRooms[1]]: [1, 2, 1, 1, 1, 5, 1, 1]
 };
 var creepBodyParts =    {   [myRooms[0]]:   [
                                             [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
                                             [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                             [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
-                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
-                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [CLAIM, CLAIM, MOVE, MOVE],
                                             [WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE]
                                             ],
@@ -95,11 +95,11 @@ var creepBodyParts =    {   [myRooms[0]]:   [
                                             [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
                                             [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                             [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
-                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                            [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [CLAIM, CLAIM, MOVE, MOVE],
-                                            [WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE]
+                                            [WORK,CARRY,MOVE]
                                             ]
                         };
 //{RAUM: {ROLLE: [x,y]}}; wohin der creep direkt nach dem spawnen hinläuft
@@ -109,7 +109,9 @@ var preRespawnDestination = {
 };
 //falls ein link/container immer bis zu einem cap gefüllt werden soll, hier rein ({raum: {ID: minCap}})
 var minCapLinkIDs = {       
-                            [myRooms[0]]: {[harvestLinkID[myRooms[0]]]: 500}};
+                            [myRooms[0]]: {[harvestLinkID[myRooms[0]]]: 500},
+                            [myRooms[1]]: {[harvestLinkID[myRooms[1]]]: 500}
+};
 
 var containerFillFactor = { 
                             [myRooms[0]]: 6, 
@@ -118,7 +120,7 @@ var containerFillFactor = {
 
 var builderIdlePos = {
                             [myRooms[0]]: [28, 37],  
-                            [myRooms[1]]: [33, 23]
+                            [myRooms[1]]: [31, 23]
 };
 
 var distanceHarvesterSources = {
@@ -128,18 +130,14 @@ var distanceHarvesterSources = {
 var distanceHarvesterSourceFlags = {
                             [myRooms[0]]: Game.flags.koblachHarvestSource.name, 
                             [myRooms[1]]: Game.flags.rankweilHarvestSource.name
-
 };
-
 var distanceHarvesterControllerFlags = {
                             [myRooms[0]]: Game.flags.koblachDistController.name, 
                             [myRooms[1]]: Game.flags.rankweilDistController.name
 };
-
 var pioneerFlags = {
                             [myRooms[0]]: Game.flags.pioneerKoblach.name, 
                             [myRooms[1]]: Game.flags.pioneerRankweil.name
-    
 };
 
 module.exports.loop = function () {
@@ -178,17 +176,14 @@ function runNormalState() {
         var creep = Game.creeps[name];
         var spawnRoomName = creep.memory.spawnRoomName;
         var spawn = Game.getObjectById(mainSpawns[spawnRoomName]);
-         if(spawn.spawning == null || (spawn.spawning != null && spawn.spawning.name != name)) { //if this creep is not spawning
+         if(spawn != null && spawn.spawning == null || (spawn != null && spawn.spawning != null && spawn.spawning.name != name)) { //if this creep is not spawning
             if(creep.memory.role != undefined) {
                 if(creep.memory.role == 'harvester') {
                  roleHarvester.run(creep);
                 } else if(creep.memory.role == 'upgrader') {
-                    if(creep.memory.spawnRoomName == myRooms[0])
-                        roleUpgrader.run(creep, southContainerID[spawnRoomName], upgraderLinkID[spawnRoomName]);
-                    else if(creep.memory.spawnRoomName == myRooms[1])
-                        roleUpgrader.run(creep, southContainerID[spawnRoomName]);
+                    roleUpgrader.run(creep, southContainerID[spawnRoomName], upgraderLinkID[spawnRoomName]);
                 } else if(creep.memory.role == 'builder') {
-                     roleBuilder.run(creep, storageID[spawnRoomName], containerAndStorageIDs[spawnRoomName], containerFillFactor[spawnRoomName], builderIdlePos[spawnRoomName][0], builderIdlePos[spawnRoomName][1]);
+                    roleBuilder.run(creep, storageID[spawnRoomName], containerAndStorageIDs[spawnRoomName], containerFillFactor[spawnRoomName], builderIdlePos[spawnRoomName][0], builderIdlePos[spawnRoomName][1]);
                 } else if(creep.memory.role == 'melee') {
                     roleMelee.run(creep);
                 } else if(creep.memory.role == 'transporter') {

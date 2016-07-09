@@ -10,11 +10,11 @@ var roleTower = {
                 
                 var healer = getHealer(tower, hostileCreeps);
                 if(healer) {
-                    if(canInflictDamage(tower, healer[0], healer[1])) {
-                        tower.attack(healer);
-                    } else {
-                        console.log('cant deal damage');
-                    }
+                    // if(canInflictDamage(tower, healer[0], healer[1])) {
+                    //     tower.attack(healer);
+                    // } else {
+                    //     console.log('cant deal damage');
+                    // }
                     
                 } else {
                     tower.attack(tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS));

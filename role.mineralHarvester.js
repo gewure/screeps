@@ -21,7 +21,7 @@ var roleMineralHarvester = {
         source = Game.getObjectById(sourceID);
         mineralID = minerID;
         mineral = Game.getObjectById(mineralID);
-            console.log(creep.carry[RESOURCE_LEMERGIUM]);
+            //console.log(creep.carry[RESOURCE_LEMERGIUM]);
         containers = [];
         for(var i = 0; i < containerIDs.length; ++i) containers[containers.length] = Game.getObjectById(containerIDs[i]);
         
