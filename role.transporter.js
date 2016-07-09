@@ -55,9 +55,9 @@ function fillFromContainer(creep, stateChanged, activeCarryCount) {
         //first check if main containers have more energy than the creep can carry, else go to big storage
         var carryParts = getActiveBodyPartCount(creep, CARRY);
         var closestArray = [];
-        for(var i = 0; i < mainContainer.length; ++i) {
-            var container = Game.getObjectById(mainContainer[i]); 
-            if(_.sum(container.store) > 0) 
+        for(var i = 0; i < containerIDsWStorage.length; ++i) {
+            var container = Game.getObjectById(containerIDsWStorage[i]); 
+            if(container.store[RESOURCE_ENERGY] > carryParts * 50 || (creep.pos.isNearTo(container) && container.store[RESOURCE_ENERGY] > carryParts * 50)) 
                 closestArray[closestArray.length] = container;
         }
         if(closestArray.length > 0) {
@@ -67,49 +67,25 @@ function fillFromContainer(creep, stateChanged, activeCarryCount) {
             }
             
         } else {
-            
-            var big = Game.getObjectById(bigStoreID);
-            if(big != undefined && big.store[RESOURCE_ENERGY] > 0) {
-                if(big.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                    goto(creep, stateChanged, big);
-                }
+            //no container with more energy than te creep can carry, search containers with more than 0 energy
+            for(var i = 0; i < containerIDsWStorage.length; ++i) {
+            var container = Game.getObjectById(containerIDsWStorage[i]); 
+            if(container.store[RESOURCE_ENERGY] > 0 || (creep.pos.isNearTo(container) && container.store[RESOURCE_ENERGY] > 0)) 
+                closestArray[closestArray.length] = container;
             }
-            //IDLE
-            
-            
-            
-            
-            // var big = Game.getObjectById(bigStoreID);
-            
-            // if(big != undefined && _.sum(big.store) > 0) {
-            //     if(big.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            //         goto(creep, stateChanged, big);
-            //     }  
-            // //FAIL SAFE goto container with biggest energy amount
-            // } else {
-            //     for(var i = 0; i < mainContainer.length; ++i) {
-            //         var container = Game.getObjectById(mainContainer[i]); 
-            //         if(_.sum(container.store) > 0) 
-            //             closestArray[closestArray.length] = container;
-            //     }
-            //     if(closestArray.length > 0) {
-            //         var closest = creep.pos.findClosestByRange(closestArray);
-            //         if(closest.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            //             goto(creep, stateChanged, closest);
-            //         }
-                    
-            //     }
-            // }
-            
+            if(closestArray.length > 0) {
+                var closest = creep.pos.findClosestByRange(closestArray);
+                if(closest.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    goto(creep, stateChanged, closest);
+                }
+            } 
         }
             
     } else {
         var arr = undefined;
-        if(minCapLinkIDs != undefined) {
-            arr = containerIDs;
-        } else {
-            arr = mainContainer;
-        }
+        if(minCapLinkIDs != undefined) arr = containerIDs;
+        else arr = mainContainer;
+        
         var container = getClosestHighEnergyContainer(creep, minEnergyLimit, arr);
         if(container) {
             if(container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {

@@ -10,6 +10,8 @@ var logicLinkUpgrader = require('logic.linkSend');
 var roleSpecialAttackMelee = require('role.specialAttack-Melee');
 var roleOtherRoomHarvester = require('role.otherRoomHarvester');
 var roleMineralHarvester = require('role.mineralHarvester');
+var roleReserver = require('role.reserver');
+var rolePioneer = require('role.pioneer');
 
 var myRooms = ['E39S24', 'E39S23'];
 var mainSpawns = {
@@ -64,42 +66,46 @@ var allied = ['Gewure'];
 //AB HIER REIHENFOLGE DER ARRAYS WICHTIG!!! das heißt, wenn in roles ein einem raum zb. ein transporter an array position 0 steht, müssen seine eigenschaften ebenfalls am index 0 definiert werden.
 //**************
 var roles = {
-                [myRooms[0]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomHarvester'],
-                [myRooms[1]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomHarvester']
+                [myRooms[0]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomHarvester', 'reserver', 'pioneer'],
+                [myRooms[1]]: ['containerHarvesterNorth', 'transporter', 'containerHarvesterSouth', 'builder', 'upgrader', 'otherRoomHarvester', 'reserver', 'pioneer']
 };
 var shouldPreRespawn = {
-                            [myRooms[0]]: [true, true, true, false, true, false],
-                            [myRooms[1]]: [true, true, true, false, true, false]
+                            [myRooms[0]]: [true, true, true, false, true, false, false, false],
+                            [myRooms[1]]: [true, true, true, false, true, false, false, false]
 };
 var spawnUntil = {      
-                            [myRooms[0]]: [1, 2, 1, 1, 1, 1],
-                            [myRooms[1]]: [1, 1, 1, 1, 1, 1]
+                            [myRooms[0]]: [1, 2, 1, 1, 1, 1, 1, 1],
+                            [myRooms[1]]: [1, 2, 1, 1, 1, 1, 1, 1]
 }; 
 var maxCreepsPerRole = {    
-                            [myRooms[0]]: [1, 2, 1, 1, 1, 3],
-                            [myRooms[1]]: [1, 2, 1, 2, 2, 3]
+                            [myRooms[0]]: [1, 2, 1, 1, 1, 4, 1, 1],
+                            [myRooms[1]]: [1, 2, 1, 2, 2, 4, 1, 1]
 };
 var creepBodyParts =    {   [myRooms[0]]:   [
                                             [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
-                                            [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
+                                            [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                             [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
-                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
-                                            [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
+                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [CLAIM, CLAIM, MOVE, MOVE],
+                                            [WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE]
                                             ],
                             [myRooms[1]]:   [
                                             [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
-                                            [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
+                                            [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                             [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
-                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                            [WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
-                                            [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]
+                                            [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [CLAIM, CLAIM, MOVE, MOVE],
+                                            [WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE]
                                             ]
                         };
 //{RAUM: {ROLLE: [x,y]}}; wohin der creep direkt nach dem spawnen hinläuft
 var preRespawnDestination = {
-                            [myRooms[0]]: [[28,30], [25,29], [22,41], [0,0], [8,40], [0,0]],
-                            [myRooms[1]]: [[45,31], [41,20], [43,11], [0,0], [42,13], [0,0]]
+                            [myRooms[0]]: [[28,30], [25,29], [22,41], [0,0], [8,40], [0,0], [0,0], [0,0]],
+                            [myRooms[1]]: [[45,31], [41,20], [43,11], [0,0], [42,13], [0,0], [0,0], [0,0]]
 };
 //falls ein link/container immer bis zu einem cap gefüllt werden soll, hier rein ({raum: {ID: minCap}})
 var minCapLinkIDs = {       
@@ -122,16 +128,23 @@ var distanceHarvesterSources = {
 var distanceHarvesterSourceFlags = {
                             [myRooms[0]]: Game.flags.koblachHarvestSource.name, 
                             [myRooms[1]]: Game.flags.rankweilHarvestSource.name
+
+};
+
+var distanceHarvesterControllerFlags = {
+                            [myRooms[0]]: Game.flags.koblachDistController.name, 
+                            [myRooms[1]]: Game.flags.rankweilDistController.name
+};
+
+var pioneerFlags = {
+                            [myRooms[0]]: Game.flags.pioneerKoblach.name, 
+                            [myRooms[1]]: Game.flags.pioneerRankweil.name
+    
 };
 
 module.exports.loop = function () {
     clearDeadCreeps();
     runNormalState();
-}
-
-function test() {
-
-    
 }
 
 //if nothing special is happening run this tree. IMPLEMENT: other trees
@@ -190,6 +203,10 @@ function runNormalState() {
                     roleSpecialAttackMelee.run(creep);
                 } else if(creep.memory.role == 'otherRoomHarvester') {
                     roleOtherRoomHarvester.run(creep, distanceHarvesterSources[spawnRoomName], storageID[spawnRoomName], distanceHarvesterSourceFlags[spawnRoomName]);
+                } else if(creep.memory.role == 'reserver') {
+                    roleReserver.run(creep, storageID[spawnRoomName], distanceHarvesterControllerFlags[spawnRoomName]);
+                } else if(creep.memory.role == 'pioneer') {
+                    rolePioneer.run(creep, storageID[spawnRoomName], pioneerFlags[spawnRoomName]);
                 }
             } 
         }

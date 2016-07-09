@@ -38,7 +38,7 @@ var roleTower = {
                                 return ((structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax)  
                                         // || (structure.structureType == STRUCTURE_WALL && structure.hits < minWallHitpoints) 
                                          //|| (structure.structureType == STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) 
-                                         //|| (structure.structureType == STRUCTURE_RAMPART && structure.hits < minRampartHitpoints)
+                                         || (structure.structureType == STRUCTURE_RAMPART && structure.hits < minRampartHitpoints)
                                         );
                             }, algorithm:'dijkstra'}); 
                 }
