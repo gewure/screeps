@@ -2,89 +2,60 @@ var untilPathRecalc = 1;
 
 var rolePioneer = {
     run: function(creep, storageID, roomFlagName) {
-        if(Memory.tempPioSource2Busy == undefined) Memory.tempPioSource2Busy = false;
-        
-        checkSourceDeadCreep();
-        if(!checkSuicide(creep)) {
-            if(creep.memory.reHarvest == undefined) creep.memory.reHarvest = false;
-            if(creep.memory.state == undefined) creep.memory.state = 'fill';
-            if(creep.room.name == creep.memory.spawnRoomName) {
-                //find container 
-                if(creep.carry.energy == 0 && creep.ticksToLive > 80) {
-                    creep.memory.state = 'fill';
-                    if(Game.getObjectById(storageID).transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                        goto(creep, hasStateChanged(creep), Game.getObjectById(storageID));
-                    }
-                //go to other room
-                } else if (creep.ticksToLive > 80) {
-                    creep.memory.state = 'build';
-                    var s = Game.flags[roomFlagName];
-                    goto(creep, hasStateChanged(creep), s);
+        if(creep.memory.reHarvest == undefined) creep.memory.reHarvest = false;
+        if(creep.memory.state == undefined) creep.memory.state = 'fill';
+        if(creep.room.name == creep.memory.spawnRoomName) {
+            //find container 
+            if(creep.carry.energy == 0 && creep.ticksToLive > 80) {
+                creep.memory.state = 'fill';
+                if(Game.getObjectById(storageID).transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    goto(creep, hasStateChanged(creep), Game.getObjectById(storageID));
                 }
-             
-            //creep is in other room   
-            } else {
-                if(creep.carry.energy > 0 && creep.memory.reHarvest == false) {
-                    creep.memory.state = 'build';
-                    preCheckStates(creep);
-                    buildingState(creep);
-                    
-                //walk back
-                } else {
-                    //harvest energy
-    
-                    var source1 = Game.getObjectById('576a9cd857110ab231d89d0a');
-                    var source2 = Game.getObjectById('576a9cd857110ab231d89d08');
-                    
-                   // var targetSource = (source1.energy > 0) ? source1 : source2;
-                    
-                    //SPECIAL
-                    if((!Memory.tempPioSource2Busy || Memory.tempPioSource2BusyCreep == creep.id) && source2.energy > 0 && !creep.memory.state == 'fill') {
-                        targetSource = source2;
-                        Memory.tempPioSource2Busy = true;
-                        Memory.tempPioSource2BusyCreep = creep.id;
-                    } else {
-                        targetSource = source1;
-                    }
-                    
-                    //SPECIAL END
-                    creep.memory.state = 'fill';
-                    var ret = undefined;
-                    if((ret = creep.harvest(targetSource))== ERR_NOT_IN_RANGE) {
-                        goto(creep, hasStateChanged(creep), targetSource);
-                    } else if(ret == OK) {
-                        if(creep.carry.energy < creep.carryCapacity) {
-                            creep.memory.reHarvest = true;
-                        } else {
-                            creep.memory.reHarvest = false;
-                            if(Memory.tempPioSource2BusyCreep != undefined && creep.id == Memory.tempPioSource2BusyCreep) {
-                                Memory.tempPioSource2Busy = false;
-                            }
-                        }
-                    }
-                }
+            //go to other room
+            } else if (creep.ticksToLive > 80) {
+                creep.memory.state = 'build';
+                var s = Game.flags[roomFlagName];
+                goto(creep, hasStateChanged(creep), s);
             }
-            creep.memory.stateBefore = creep.memory.state;
+         
+        //creep is in other room   
+        } else {
+            if(creep.carry.energy > 0 && creep.memory.reHarvest == false) {
+                creep.memory.state = 'build';
+                preCheckStates(creep);
+                buildingState(creep);
+                
+            //walk back
+            } else {
+                //harvest energy
+                
+                var source1 = Game.getObjectById('576a9cd857110ab231d89d0a');
+                var source2 = Game.getObjectById('576a9cd857110ab231d89d08');
+                
+                var targetSource = undefined;
+                if(source1.energy > 0) {
+                    targetSource = source1;
+                } else {
+                    targetSource = source2;
+                }
+                
+                var ret = undefined;
+                if((ret = creep.harvest(targetSource))== ERR_NOT_IN_RANGE) {
+                    goto(creep, hasStateChanged(creep), targetSource);
+                } else if(ret == OK) {
+                    if(creep.carry.energy < creep.carryCapacity) {
+                        creep.memory.reHarvest = true;
+                    } else {
+                        creep.memory.reHarvest = false;
+                    }
+                }
+                creep.memory.state = 'fill';
+                goto(creep, hasStateChanged(creep), Game.getObjectById(storageID));
+            }
         }
+        creep.memory.stateBefore = creep.memory.state;
     }
 };
-
-//SPECIAL
-function checkSourceDeadCreep() {
-    var ok = false;
-    for(var name in Game.creeps) {
-        var creep = Game.creeps[name];
-        if(Memory.tempPioSource2BusyCreep != undefined && Memory.tempPioSource2BusyCreep == creep.id) {
-            ok = true;
-            break;
-        }
-    }
-    if(!ok) {
-        Memory.tempPioSource2BusyCreep = undefined;
-        Memory.tempPioSource2Busy = false;
-    }
-}
-//SPECIAL END
 
 function preCheckStates(creep) {
     if(creep.memory.building == undefined) {
@@ -210,18 +181,6 @@ function hasStateChanged(creep) {
     if(creep.memory.state != creep.memory.stateBefore)
         return true;
     else return false;
-}
-
-function checkSuicide(creep) {
-   var npcs = creep.room.find(FIND_HOSTILE_CREEPS, {
-            filter: (object) => {return (object.owner != 'Atlan');}, algorithm:'astar'
-    });
-            
-    if(npcs.length > 0) {
-        creep.suicide();
-        return true;
-    }
-    return false;
 }
 
 module.exports = rolePioneer;

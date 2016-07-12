@@ -8,17 +8,25 @@ var roleTower = {
            
             if(hostileCreeps.length > 0) {
                 
-                var healer = getHealer(tower, hostileCreeps);
-                if(healer) {
+                // var healer = getHealer(tower, hostileCreeps);
+                // if(healer) {
                     // if(canInflictDamage(tower, healer[0], healer[1])) {
-                    //     tower.attack(healer);
+                        //  tower.attack(healer);
                     // } else {
                     //     console.log('cant deal damage');
                     // }
                     
-                } else {
-                    tower.attack(tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS));
-                }
+                // } else {
+                var enemy = undefined;
+
+                    var cID = '5783a08ad9a434b2577b68e6';
+                    if(cID != undefined && Game.getObjectById(cID) != undefined) {
+                        enemy = Game.getObjectById(cID);
+                    } else {
+                        enemy = hostileCreeps[getRandomInt(0,hostileCreeps.length-1)];
+                    }
+                    tower.attack(enemy);
+                // }
             
                 
             } else {

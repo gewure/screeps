@@ -86,7 +86,7 @@ function fillFromContainer(creep, stateChanged, activeCarryCount) {
         if(minCapLinkIDs != undefined) arr = containerIDs;
         else arr = mainContainer;
         
-        var container = getClosestHighEnergyContainer(creep, minEnergyLimit, arr);
+        var container = getClosestHighEnergyContainer(creep, 100, arr);
         if(container) {
             if(container.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 goto(creep, stateChanged, container);
