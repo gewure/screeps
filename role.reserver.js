@@ -1,23 +1,26 @@
 var untilPathRecalc = 1;
 
 var roleReserver = {
-    run: function(creep, storageID, controllerFlagName) {
-        if(creep.memory.state == undefined) creep.memory.state = 'fill';
-        if(creep.room.name == creep.memory.spawnRoomName) {
-
-            creep.memory.state = 'upgrade';
-            var s = Game.flags[controllerFlagName];
-            goto(creep, hasStateChanged(creep), s);
-         
-        //creep is in other room   
-        } else {
-            creep.memory.state = 'upgrade';
-            if(creep.reserveController(creep.room.controller) == ERR_NOT_IN_RANGE) {
-                goto(creep, hasStateChanged(creep), creep.room.controller);
+    run: function(creep, storageID, controllerFlagName, enemiesInRoom, fleeTarget, harvestRoomName) {
+        
+        if(!checkFlee(creep, storageID, enemiesInRoom, fleeTarget, harvestRoomName)) {
+            if(creep.memory.state == undefined) creep.memory.state = 'fill';
+            if(creep.room.name == creep.memory.spawnRoomName) {
+    
+                creep.memory.state = 'upgrade';
+                var s = Game.flags[controllerFlagName];
+                goto(creep, hasStateChanged(creep), s);
+             
+            //creep is in other room   
+            } else {
+                creep.memory.state = 'upgrade';
+                if(creep.reserveController(creep.room.controller) == ERR_NOT_IN_RANGE) {
+                    goto(creep, hasStateChanged(creep), creep.room.controller);
+                }
+                
             }
-            
+            creep.memory.stateBefore = creep.memory.state;
         }
-        creep.memory.stateBefore = creep.memory.state;
     }
 };
 
@@ -64,5 +67,39 @@ function hasStateChanged(creep) {
     if(creep.memory.state != creep.memory.stateBefore)
         return true;
     else return false;
+}
+
+function checkSuicide(creep) {
+   var npcs = creep.room.find(FIND_HOSTILE_CREEPS, {
+            filter: (object) => {return (object.owner.username == 'Invader');}, algorithm:'astar'
+    });
+            
+    if(npcs.length > 0) {
+        creep.suicide();
+        return true;
+    }
+    return false;
+}
+
+function checkFlee(creep, storageID, enemies, fleeTarget, harvestRoomName) {
+    
+    if((enemies != undefined && enemies.length > 0) || (enemies == undefined && Memory.invaderInHarvestRoom[harvestRoomName] == true)) {
+        fleeAction(creep, storageID, fleeTarget);
+        return true;
+    }
+    return false;
+}
+
+//RUN, you fools!
+function fleeAction(creep, storageID, fleeTarget) {
+    if(creep.ticksToLive < 40 && creep.carry.energy > 0) {
+        if(creep.transfer(storageID, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            goto(creep, hasStateChanged(creep), Game.getObjectById(storageID));
+        }
+    } else {
+        if(!creep.pos.isNearTo(fleeTarget[0], fleeTarget[1])) {
+            goto(creep, hasStateChanged(creep), new RoomPosition(fleeTarget[0], fleeTarget[1], creep.memory.spawnRoomName));
+        }
+    }
 }
 module.exports = roleReserver;

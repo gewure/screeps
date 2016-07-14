@@ -1,11 +1,13 @@
 var untilPathRecalc = 1;
 
+var harvestInRoom = false;
+
 var rolePioneer = {
-    run: function(creep, storageID, roomFlagName) {
+    run: function(creep, storageID, roomFlagName, enemiesInRoom, fleeTarget, harvestRoomName) {
         if(Memory.tempPioSource2Busy == undefined) Memory.tempPioSource2Busy = false;
         
         checkSourceDeadCreep();
-        if(!checkSuicide(creep)) {
+        if(!checkFlee(creep, storageID, enemiesInRoom, fleeTarget, harvestRoomName)) {
             if(creep.memory.reHarvest == undefined) creep.memory.reHarvest = false;
             if(creep.memory.state == undefined) creep.memory.state = 'fill';
             if(creep.room.name == creep.memory.spawnRoomName) {
@@ -32,35 +34,45 @@ var rolePioneer = {
                 //walk back
                 } else {
                     //harvest energy
-    
-                    var source1 = Game.getObjectById('576a9cd857110ab231d89d0a');
-                    var source2 = Game.getObjectById('576a9cd857110ab231d89d08');
-                    
-                   // var targetSource = (source1.energy > 0) ? source1 : source2;
-                    
-                    //SPECIAL
-                    if((!Memory.tempPioSource2Busy || Memory.tempPioSource2BusyCreep == creep.id) && source2.energy > 0 && !creep.memory.state == 'fill') {
-                        targetSource = source2;
-                        Memory.tempPioSource2Busy = true;
-                        Memory.tempPioSource2BusyCreep = creep.id;
-                    } else {
-                        targetSource = source1;
-                    }
-                    
-                    //SPECIAL END
-                    creep.memory.state = 'fill';
-                    var ret = undefined;
-                    if((ret = creep.harvest(targetSource))== ERR_NOT_IN_RANGE) {
-                        goto(creep, hasStateChanged(creep), targetSource);
-                    } else if(ret == OK) {
-                        if(creep.carry.energy < creep.carryCapacity) {
-                            creep.memory.reHarvest = true;
+                    if(harvestInRoom) {
+                        var source1 = Game.getObjectById('576a9cd857110ab231d89d0a');
+                        var source2 = Game.getObjectById('576a9cd857110ab231d89d08');
+                        
+                       // var targetSource = (source1.energy > 0) ? source1 : source2;
+                        
+                        //SPECIAL
+                        if((!Memory.tempPioSource2Busy || Memory.tempPioSource2BusyCreep == creep.id) && source2.energy > 0) {
+                            if(creep.pos.isNearTo(source1) && source1.energy > 0) {
+                                targetSource = source1;
+                            } else {
+                                targetSource = source2;
+                                Memory.tempPioSource2Busy = true;
+                                Memory.tempPioSource2BusyCreep = creep.id;
+                            }
+                            
                         } else {
-                            creep.memory.reHarvest = false;
-                            if(Memory.tempPioSource2BusyCreep != undefined && creep.id == Memory.tempPioSource2BusyCreep) {
-                                Memory.tempPioSource2Busy = false;
+                            targetSource = source1;
+                        }
+                        
+                        //SPECIAL END
+                        creep.memory.state = 'fill';
+                        var ret = undefined;
+                        if((ret = creep.harvest(targetSource)) == ERR_NOT_IN_RANGE) {
+                            goto(creep, hasStateChanged(creep), targetSource);
+                        } else if(ret == OK) {
+                            if(creep.carry.energy < creep.carryCapacity) {
+                                creep.memory.reHarvest = true;
+                            } else {
+                                creep.memory.reHarvest = false;
+                                if(Memory.tempPioSource2BusyCreep != undefined && creep.id == Memory.tempPioSource2BusyCreep) {
+                                    Memory.tempPioSource2Busy = false;
+                                    Memory.tempPioSource2BusyCreep = undefined;
+                                }
                             }
                         }
+                    } else {
+                        creep.memory.state = 'fill';
+                        goto(creep, hasStateChanged(creep), Game.getObjectById(storageID));
                     }
                 }
             }
@@ -197,7 +209,7 @@ function searchNewTarget(creep) {
             filter: (object) => {return (object.hits < object.hitsMax && object.structureType == STRUCTURE_ROAD);}, algorithm:'dijkstra'
             });
         
-        lowLifeTargets.sort((a,b) => a.hits - b.hits);
+        //lowLifeTargets.sort((a,b) => a.hits - b.hits);
         
         if(lowLifeTargets.length > 0) {
             creep.memory.tempWorksite = lowLifeTargets[0].id;
@@ -224,4 +236,26 @@ function checkSuicide(creep) {
     return false;
 }
 
+
+function checkFlee(creep, storageID, enemies, fleeTarget, harvestRoomName) {
+    
+    if((enemies != undefined && enemies.length > 0) || (enemies == undefined && Memory.invaderInHarvestRoom[harvestRoomName] == true)) {
+        fleeAction(creep, storageID, fleeTarget);
+        return true;
+    }
+    return false;
+}
+
+//RUN, you fools!
+function fleeAction(creep, storageID, fleeTarget) {
+    if(creep.ticksToLive < 40 && creep.carry.energy > 0) {
+        if(creep.transfer(storageID, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            goto(creep, hasStateChanged(creep), Game.getObjectById(storageID));
+        }
+    } else {
+        if(!creep.pos.isNearTo(fleeTarget[0], fleeTarget[1])) {
+            goto(creep, hasStateChanged(creep), new RoomPosition(fleeTarget[0], fleeTarget[1], creep.memory.spawnRoomName));
+        }
+    }
+}
 module.exports = rolePioneer;

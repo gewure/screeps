@@ -139,7 +139,7 @@ function distribute(creep, stateChanged, activeCarryCount) {
 }
 
 function checkForTowerFill(creep, stateChanged, activeCarryCount) {
-    var closestTowerLowEnergy = getClosestLowEnergyTarget(creep, activeCarryCount * 50, towerIDs);
+    var closestTowerLowEnergy = getClosestLowEnergyTarget(creep, 150, towerIDs);
 
     if(closestTowerLowEnergy != null) {
         fillTower(creep, closestTowerLowEnergy, stateChanged);
