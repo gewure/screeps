@@ -18,7 +18,9 @@ var roleDistTransporter = require('role.distTransporter');
 var roleHarvestRoomDefender = require('role.harvestRoomDefender');
 
 var myRooms = ['E39S24', 'E39S23'];
-var harvestRooms = ['E38S24', 'E39S22']; //gleiche reihenfolge wie myRooms
+var harvestRooms = {            [myRooms[0]]: 'E38S24',
+                                [myRooms[1]]: 'E39S22'
+}; //gleiche reihenfolge wie myRooms
 
 var mainSpawns = {
                                 [myRooms[0]]: '576d823abe1cccb44b189dc7',
@@ -89,7 +91,7 @@ var creepBodyParts =    {
                                             [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                             [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
                                             [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE],
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [CLAIM, CLAIM, MOVE, MOVE],
                                             [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
@@ -100,7 +102,7 @@ var creepBodyParts =    {
                                             [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE], 
                                             [WORK, MOVE, WORK, WORK, MOVE, WORK, CARRY, WORK, MOVE],
                                             [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], 
-                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE], 
+                                            [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [CLAIM, CLAIM, MOVE, MOVE],
                                             [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
@@ -183,18 +185,24 @@ function preWork() {
         maxCreepsPerRole[myRooms[1]] = [1, 3, 1, 1, 1, 3, 1, 1, 0];
     }
     
-    enemiesInHarvesterRooms = getEnemysIn(harvestRooms, myRooms);
+    enemiesInHarvesterRooms = getEnemysInHarvestRooms(harvestRooms);
+    
+    // for(var x in enemiesInHarvesterRooms) {
+    //     console.log(x + '   ' + enemiesInHarvesterRooms[x]);
+    // }
     
     //initialize array
     if(Memory.invaderInHarvestRoom == undefined) Memory.invaderInHarvestRoom = {};
-    for(var i = 0; i < harvestRooms.length; ++i) {
+    for(var i in harvestRooms) {
         if(Memory.invaderInHarvestRoom[harvestRooms[i]] == undefined) {
             Memory.invaderInHarvestRoom[harvestRooms[i]] = false;
         }
     }
     
-    for(var i = 0; i < harvestRooms.length; ++i) {
+    for(var i in harvestRooms) {
+
         if(enemiesInHarvesterRooms[harvestRooms[i]] != undefined && enemiesInHarvesterRooms[harvestRooms[i]].length > 0) {
+            console.log('true');
             Memory.invaderInHarvestRoom[harvestRooms[i]] = true;
         } 
         //normally this will not trigger the reset, 'cause the room defender sets the flag after it kills the invader. will only trigger if the creep died before the defender is abel to kill it. 
@@ -214,12 +222,29 @@ function preWork() {
     //         break;
     //     }
     // }
-    var defenderRoleIndex = 9;
-    for(var i = 0; i < harvestRooms.length; ++i) {
+    
+    
+    var defenderRoleIndex = 8;
+    var index = 0;
+    for(var i in harvestRooms) {
         if(Memory.invaderInHarvestRoom[harvestRooms[i]] == true) {
-            maxCreepsPerRole[myRooms[i]][defenderRoleIndex] = 1;
+            maxCreepsPerRole[myRooms[index++]][defenderRoleIndex] = 1;
+            console.log(maxCreepsPerRole[myRooms[index-1]][defenderRoleIndex]);
         }
     }
+    
+    // console.log(maxCreepsPerRole[myRooms[0]][def])
+    // console.log('EN');
+    
+    // for(var x in enemiesInHarvesterRooms) console.log(x);
+    
+    // //finally reset harvest room ids to creep's spawn room name
+    // for(var i in harvestRooms) {
+    //     console.log(harvestRooms[i]);
+    //     for(var x = 0; 0 < enemiesInMyRooms[harvestRooms[i]].length; ++x) {
+    //         console.log(x);
+    //     }
+    // }
 
 }
 
@@ -313,6 +338,21 @@ function getEnemysIn(roomsToCheck, spawnRooms) {
         if(roomsToCheck[i] != undefined) {
             if(Game.rooms[roomsToCheck[i]] != undefined) {
                 enemies[spawnRooms[i]] = Game.rooms[roomsToCheck[i]].find(FIND_HOSTILE_CREEPS);
+            }
+        }
+    }
+    return enemies;
+}
+
+function getEnemysInHarvestRooms(roomsToCheck) {
+    var enemies = {};
+    for(var x in roomsToCheck) {
+        for(var i = 0; i < roomsToCheck[x].length; ++i) {
+            if([roomsToCheck[x]][i] != undefined) {
+                if(Game.rooms[[roomsToCheck[x]][i]] != undefined) {
+                    console.log('RUN');
+                    enemies[[roomsToCheck[x]][i]] = Game.rooms[[roomsToCheck[x]][i]].find(FIND_HOSTILE_CREEPS);
+                }
             }
         }
     }

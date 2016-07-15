@@ -24,14 +24,7 @@ var roleOtherRoomHarvester = {
                 }
              
             //creep is in other room   
-            } else {
-                
-                var hostileC = creep.room.find(FIND_HOSTILE_CREEPS);
-                for(var i = 0; i < hostileC.length; ++i) {
-                    console.log(hostileC[i] + '   ' + hostileC[i].owner);
-                }
-                
-                
+            } else {                
                 if(creep.carry.energy < creep.carryCapacity && creep.ticksToLive > 80) {
                     creep.memory.state = 'harvest';
                     var source = Game.getObjectById(sourceID);
@@ -46,12 +39,6 @@ var roleOtherRoomHarvester = {
                 }
             }
             creep.memory.stateBefore = creep.memory.state;
-        } else {
-            console.log('ELSE');
-            var hostileC = creep.room.find(FIND_HOSTILE_CREEPS);
-                for(var i = 0; i < hostileC.length; ++i) {
-                    console.log(hostileC[i] + '   ' + hostileC[i].owner.username);
-                }
         }
     }
 };
