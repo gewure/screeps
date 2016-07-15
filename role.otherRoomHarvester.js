@@ -1,11 +1,11 @@
 var untilPathRecalc = 1;
 
 var roleOtherRoomHarvester = {
-    run: function(creep, sourceID, storageID, roomFlagName, enemiesInRoom, fleeTarget, harvestRoomName) {
+    run: function(creep, sourceID, storageID, roomFlagName, fleeTarget, harvestRoomName) {
         if(Memory.tempPioSource2Busy == undefined) Memory.tempPioSource2Busy = false;
         
         checkSourceDeadCreep();
-        if(!checkFlee(creep, storageID, enemiesInRoom, fleeTarget, harvestRoomName)) {
+        if(!checkFlee(creep, storageID, fleeTarget, harvestRoomName)) {
             if(creep.memory.reHarvest == undefined) creep.memory.reHarvest = false;
             if(creep.memory.state == undefined) creep.memory.state = 'harvest';
             
@@ -113,9 +113,9 @@ function checkSuicide(creep) {
     return false;
 }
 
-function checkFlee(creep, storageID, enemies, fleeTarget, harvestRoomName) {
+function checkFlee(creep, storageID, fleeTarget, harvestRoomName) {
     
-    if((enemies != undefined && enemies.length > 0) || (enemies == undefined && Memory.invaderInHarvestRoom[harvestRoomName] == true)) {
+    if(Memory.invaderInHarvestRoom[harvestRoomName] == true) {
         fleeAction(creep, storageID, fleeTarget);
         return true;
     }
@@ -126,10 +126,12 @@ function checkFlee(creep, storageID, enemies, fleeTarget, harvestRoomName) {
 function fleeAction(creep, storageID, fleeTarget) {
     if(creep.ticksToLive < 40 && creep.carry.energy > 0) {
         if(creep.transfer(storageID, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            creep.memory.path = undefined;
             goto(creep, hasStateChanged(creep), Game.getObjectById(storageID));
         }
     } else {
         if(!creep.pos.isNearTo(fleeTarget[0], fleeTarget[1])) {
+            creep.memory.path = undefined;
             goto(creep, hasStateChanged(creep), new RoomPosition(fleeTarget[0], fleeTarget[1], creep.memory.spawnRoomName));
         }
     }

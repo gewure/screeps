@@ -95,7 +95,7 @@ var creepBodyParts =    {
                                             [WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [CLAIM, CLAIM, MOVE, MOVE],
                                             [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
-                                            [ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE]
+                                            [ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE]
                                            ],
                             [myRooms[1]]:   [
                                             [WORK, CARRY, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE],
@@ -106,7 +106,7 @@ var creepBodyParts =    {
                                             [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
                                             [CLAIM, CLAIM, MOVE, MOVE],
                                             [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
-                                            [ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE]
+                                            [ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, MOVE]
                                             ]
                         };
 //{RAUM: {ROLLE: [x,y]}}; wohin der creep direkt nach dem spawnen hinläuft
@@ -153,13 +153,16 @@ var harvestRoomName = {
 };
 //position in creep's spawn room
 var harvesterFleeTarget = {
-                            [myRooms[0]]: [14,35], 
-                            [myRooms[1]]: [10, 2]  
+                            [myRooms[0]]: [14, 35], 
+                            [myRooms[1]]: [5, 5]
 };
-
 var harvestRoomExitDirection = {
                             [myRooms[0]]: LEFT, 
                             [myRooms[1]]: TOP
+};
+var harvestRoomDefenderIdlePos = {
+                            [myRooms[0]]: new RoomPosition(2, 34, myRooms[0]), 
+                            [myRooms[1]]: new RoomPosition(20, 1, myRooms[1])
 };
 
 var enemiesInHarvesterRooms = undefined;
@@ -202,50 +205,33 @@ function preWork() {
     for(var i in harvestRooms) {
 
         if(enemiesInHarvesterRooms[harvestRooms[i]] != undefined && enemiesInHarvesterRooms[harvestRooms[i]].length > 0) {
-            console.log('true');
+            console.log('true' + harvestRooms[i]);
             Memory.invaderInHarvestRoom[harvestRooms[i]] = true;
         } 
         //normally this will not trigger the reset, 'cause the room defender sets the flag after it kills the invader. will only trigger if the creep died before the defender is abel to kill it. 
         else if(enemiesInHarvesterRooms[harvestRooms[i]] != undefined && enemiesInHarvesterRooms[harvestRooms[i]].length <= 0) {
             Memory.invaderInHarvestRoom[harvestRooms[i]] = false;
+            console.log('false');
         }
     }
-    
-    //get role index for roomdefender
-    // var roleIndex = {};
-    // for(var )
-    // for(var i = 0; i < roles.length; ++i) {
-    //     console.log(roles[i]);
-    //     if(roles[i] == 'harvestRoomDefender') {
-    //         console.log('found');
-    //         roleIndex = i;
-    //         break;
-    //     }
-    // }
     
     
     var defenderRoleIndex = 8;
     var index = 0;
     for(var i in harvestRooms) {
         if(Memory.invaderInHarvestRoom[harvestRooms[i]] == true) {
-            maxCreepsPerRole[myRooms[index++]][defenderRoleIndex] = 1;
-            console.log(maxCreepsPerRole[myRooms[index-1]][defenderRoleIndex]);
+            maxCreepsPerRole[harvestRoomToSpawnRoom(harvestRooms[i])][defenderRoleIndex] = 1;
+            ++index;
         }
     }
-    
-    // console.log(maxCreepsPerRole[myRooms[0]][def])
-    // console.log('EN');
-    
-    // for(var x in enemiesInHarvesterRooms) console.log(x);
-    
-    // //finally reset harvest room ids to creep's spawn room name
-    // for(var i in harvestRooms) {
-    //     console.log(harvestRooms[i]);
-    //     for(var x = 0; 0 < enemiesInMyRooms[harvestRooms[i]].length; ++x) {
-    //         console.log(x);
-    //     }
-    // }
+}
 
+function harvestRoomToSpawnRoom(harvestR) {
+    for(var x in harvestRoomName) {
+        if(harvestRoomName[x] == harvestR)
+            return x;
+    }
+    return undefined;
 }
 
 //if nothing special is happening run this tree. IMPLEMENT: other trees
@@ -303,30 +289,18 @@ function runNormalState() {
                     roleMineralHarvester.run(creep, '577ca559b556d7683da9f635', ['577c993cb3a06602076bd71e'], undefined, '576a9d5b7f58551641fcb95b');
                 } 
                 
-                else if(creep.memory.role == 'otherRoomHarvester') { // creep, sourceID, storageID, roomFlagName, enemiesInRoom, fleeTarget, harvestRoomName
-                    roleOtherRoomHarvester.run(creep, distanceHarvesterSources[spawnRoomName], storageID[spawnRoomName], distanceHarvesterSourceFlags[spawnRoomName], enemiesInHarvesterRooms[spawnRoomName], harvesterFleeTarget[spawnRoomName], harvestRoomName[spawnRoomName]);
+                
+                //creep roles to harvest in unclaimed rooms
+                else if(creep.memory.role == 'otherRoomHarvester') {
+                    roleOtherRoomHarvester.run(creep, distanceHarvesterSources[spawnRoomName], storageID[spawnRoomName], distanceHarvesterSourceFlags[spawnRoomName], harvesterFleeTarget[spawnRoomName], harvestRoomName[spawnRoomName]);
                 } else if(creep.memory.role == 'reserver') {
-                    roleReserver.run(creep, storageID[spawnRoomName], distanceHarvesterControllerFlags[spawnRoomName], enemiesInHarvesterRooms[spawnRoomName], harvesterFleeTarget[spawnRoomName], harvestRoomName[spawnRoomName]);
-                } 
-                else if(creep.memory.role == 'pioneer') {
-                    rolePioneer.run(creep, storageID[spawnRoomName], pioneerFlags[spawnRoomName], enemiesInHarvesterRooms[spawnRoomName], harvesterFleeTarget[spawnRoomName], harvestRoomName[spawnRoomName]);
+                    roleReserver.run(creep, storageID[spawnRoomName], distanceHarvesterControllerFlags[spawnRoomName], harvesterFleeTarget[spawnRoomName], harvestRoomName[spawnRoomName]);
+                } else if(creep.memory.role == 'pioneer') {
+                    rolePioneer.run(creep, storageID[spawnRoomName], pioneerFlags[spawnRoomName], harvesterFleeTarget[spawnRoomName], harvestRoomName[spawnRoomName]);
+                } else if(creep.memory.role == 'harvestRoomDefender') {
+                    roleHarvestRoomDefender.run(creep, harvestRoomDefenderFlags[spawnRoomName], harvestRoomName[spawnRoomName], harvestRoomExitDirection[spawnRoomName], harvestRoomDefenderIdlePos[spawnRoomName]);
                 }
-                else if(creep.memory.role == 'harvestRoomDefender') {
-                    roleHarvestRoomDefender.run(creep, harvestRoomDefenderFlags[spawnRoomName], harvestRoomName[spawnRoomName], enemiesInHarvesterRooms[spawnRoomName], harvestRoomExitDirection[spawnRoomName]);
-                }
-                
-                // else if(creep.memory.role == 'distTransporter') {
-                //     roleDistTransporter.run(creep);
-                // } 
-                // else if(creep.memory.role == 'distUpgrader') {
-                //     roleDistUpgrader.run(creep);
-                // }
-                
-                // else if(creep.memory.role == 'special-Attack') {
-                //     roleSpecialAttackMelee.run(creep);
-                // } else if(creep.memory.role == 'special-Tank') {
-                //     roleTank.run(creep);
-                // }
+
             } 
         }
     }
