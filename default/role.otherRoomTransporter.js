@@ -1,23 +1,45 @@
+var storageID = '5785398b91941a441c38dd7e';
+var containerIDs = ['57838ab529a954705ae3d17b', '5782574e6405edfc66d18381'];
+var contStorIDs = ['57838ab529a954705ae3d17b', '5782574e6405edfc66d18381', '5785398b91941a441c38dd7e'];
+var towerIDs = ['578165832b0f16cb03ea73e4'];
 
-var storageID = '576a9cb857110ab231d899f8';
-var containerIDs = ['5773cc3684ed25e4699c070c', '5773f5d774e2c6695fefdb07', '57745542b6d085646bee57cf'];
-var containerIDsWStorage = ['5773cc3684ed25e4699c070c', '5773f5d774e2c6695fefdb07', storageID];
-var container = undefined;
+var container = null;
 var untilPathRecalc = 2;
-var reFillFactorFullContainer = 25;
-var minEnergyLimit = 0;
-var towerIDs = ['5773e3fae6d164973b320b2c'];
+var reFillFactorFullContainer = 10;
+var minEnergyLimit = 100;
 
-var roleTransporter = {
+
+var roleOtherRoomTransporter = {
     
     /** @param {Creep} creep **/
-    run: function(creep) {
+    run: function(creep, contIDs, contStorIDs, towIDs) {
+        containerIDs = contIDs;
+        containerIDsWStorage = contStorIDs;
+        towerIDs = towIDs;
+        
+        /* if(creep.pos.room != 'E31N1') {
+            creep.memory.isInOtherRoom=false;
+        } else {
+            creep.memory.isInOtherRoom=true;
+        } */
+        
+        //GOTO OTHER ROOM
+      /*  if(!creep.pos.isNearTo(Game.flags['extraResource']) && !creep.memory.isInOtherRoom) {
+            console.log('[otherRoomTransporter] is in the wrong room ..');
+            
+            creep.moveTo(Game.flags['extraResource']);
+            creep.memory.isInOtherRoom=false;
+        } else {
+            creep.memory.isInOtherRoom=true;
+            console.log('allahuaakbah am in the room');
+        } */
         
         if(creep.memory.state == undefined) creep.memory.state = 'fill';
         if(creep.memory.stillDistribute == undefined) creep.memory.stillDistribute = false;
         
         var activeCarryCount = getActiveBodyPartCount(creep, CARRY);
-        
+
+  
         //creep can't carry more, getClosest controller
         if(creep.carry.energy == creep.carryCapacity || (creep.memory.stillDistribute && creep.carry.energy > 0)) {
             creep.memory.state = 'distribute';
@@ -26,11 +48,29 @@ var roleTransporter = {
         //creep has no energy, go to container
         } else if(creep.carry.energy < creep.carryCapacity) {
             //only collect if creep has more than x ticks to live
-            if(creep.ticksToLive > 20) {
+            if(creep.ticksToLive > 30) {
                 creep.memory.state = 'fill';
                 var stateChanged = hasStateChanged(creep);
                 fillFromContainer(creep, stateChanged, activeCarryCount);
             }
+            
+             //###################################### death logic
+        	    if(creep.ticksToLive <= 35) {
+        	        
+            	     var targets = creep.room.find(FIND_STRUCTURES, {
+                            filter: (structure) => {
+                                return ( structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_EXTENSION ||
+                                        structure.structureType == STRUCTURE_TOWER) && structure.energy < structure.energyCapacity;
+                            }
+                            });
+                            
+                    if(targets.length > 0) {
+                        if(creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                            creep.moveTo(targets[0]);
+                        }
+                    }
+        	    }
+	    //####################################
         } 
         creep.memory.stateBefore = creep.memory.state;
 	}
@@ -38,7 +78,7 @@ var roleTransporter = {
 
 function fillFromContainer(creep, stateChanged, activeCarryCount) {
     
-    var emptyExtensions = creep.room.find(FIND_STRUCTURES, {
+    var emptyExtensions = creep.room.find(FIND_MY_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION ||
                                 structure.structureType == STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity;
@@ -67,13 +107,17 @@ function distribute(creep, stateChanged, activeCarryCount) {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION ||
                                 structure.structureType == STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity;
-                    }, algorithm:'dijkstra'});
+                    }, algorithm:'dijkstra'});           
+                    
+    creep.memory.containerPath = undefined;
+
     if(target != null) {
-        if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+        var result = creep.transfer(target, RESOURCE_ENERGY);
+        if(result == ERR_NOT_IN_RANGE) {
             goto(creep, stateChanged, target);
-        } else {
-            //walk back NOW
-            
+        } else if(result == OK) {
+            //delete path to recalc in next tick
+            creep.memory.containerPath = undefined;
         }
         
         if(creep.carry.energy > ((creep.carryCapacity / 100) * reFillFactorFullContainer)) {
@@ -91,15 +135,20 @@ function distribute(creep, stateChanged, activeCarryCount) {
 function checkForTowerFill(creep, stateChanged, activeCarryCount) {
     var closestTowerLowEnergy = getClosestLowEnergyTower(creep, activeCarryCount * 50);
 
-    if(closestTowerLowEnergy != null) {
-        fillTower(creep, closestTowerLowEnergy, stateChanged);
-            
-    } //else if(_.sum(creep.room.storage.store) < creep.room.storage.storeCapacity)
-        else if (_.sum(Game.getObjectById(containerIDs[2]).carry < Game.getObjectById(containerIDs[2]).carryCapacity)) {
+    try {
         
-        if(creep.transfer(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            goto(creep, stateChanged, creep.room.storage);
+        
+        if(closestTowerLowEnergy != null) {
+            fillTower(creep, closestTowerLowEnergy, stateChanged);
+                
+        } else if(_.sum(creep.room.storage.store) < creep.room.storage.storeCapacity) {
+            
+            if(creep.transfer(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                goto(creep, stateChanged, creep.room.storage);
+            }
         }
+    } catch (noStorageException) {
+        console.log('no storage yet exception on transporter')
     }
 }
 
@@ -116,11 +165,7 @@ function fillTower(creep, tower, stateChanged) {
             }
         //all storages are empty, idle at storage
         } else {
-            console.log('transporter '+ creep.name + ' wants to idle');
-            var idlePos = creep.room.controller; //TODO
-               goto(creep, stateChanged, idlePos );
-               //creep.move(TOP | BOTTOM);
-               
+               goto(creep, stateChanged, creep.room.storage);
         }
         
     //fill tower
@@ -145,7 +190,7 @@ function getClosestHighEnergyContainer(creep, minEnergyLimit, idArray) {
     var closestArray = [];
     for(var i = 0; i < idArray.length; ++i) {
         var container = Game.getObjectById(idArray[i]); 
-        if(_.sum(container.store) > minEnergyLimit) 
+        if(container.store[RESOURCE_ENERGY] > minEnergyLimit) 
             closestArray[closestArray.length] = container;
     }
     var closest = creep.pos.findClosestByRange(closestArray);
@@ -189,6 +234,7 @@ function goto(creep, stateChanged, target) {
         creep.memory.prevX = creep.pos.x;
         creep.memory.prevY = creep.pos.y;
     }
+    return gotoResult;
 }
 
 function hasStateChanged(creep) {
@@ -201,4 +247,4 @@ function newPath(creep, target) {
     return creep.pos.findPathTo(target, {algorithm: 'astar'});
 }
 
-module.exports = roleTransporter;
+module.exports = roleOtherRoomTransporter;

@@ -19,6 +19,7 @@ var roleMelee = {
 
     /** @param {Creep} creep **/
     run: function(creep) {
+        
         if(!protectMode) {
             if(!isInAttackRoom) {
                 creep.moveTo(roomToAttack);
@@ -32,22 +33,31 @@ var roleMelee = {
         // if not a fresh spawn
         if(!creep.memory.freshSpawn) {
 
-            var closestHostile = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
+            var closestHostiles = creep.room.find(FIND_HOSTILE_CREEPS);
             
-            if(creep.hits < 100) {
+            if(creep.hits <= 100) {
                 fightMode = false;
                 patrol(creep);
             }
            
-            if(creep.rangedAttack(closestHostile) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(closestHostile);
+            var healer = getHealer(creep, closestHostiles);
+            
+            if(healer) {
+                if(canInflictDamage(creep, healer[0], healer[1])) {
+                        creep.rangedAttack(healer);
+                } else {
+                        console.log('cant deal damage');
+                }
+                    
+            }else if(creep.rangedAttack(closestHostiles[0]) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(closestHostiles[0]);
             } else {
-                creep.attack(closestHostile);
-                creep.rangedAttack(closestHostile);
+                creep.attack(closestHostiles[0]);
+                creep.rangedAttack(closestHostiles[0]);
                 //if counterattacked: calculate direction of attack and move 1 step in other direction
                 if(creep.hits < hitslastTick) {
                     hitslastTick = creep.hits;
-                    var dirToAvaidAttack = closestHostile.getDirectionTo(creep);
+                    var dirToAvaidAttack = closestHostiles[0].getDirectionTo(creep);
                     creep.move(dirToAvaidAttack);
                 }   
             }

@@ -80,7 +80,6 @@ var roleHarvester = {
             
             //drop energy to containers (for later use)
             if(containers.length > 0) {
-                creep.say('LOL');
                 if(creep.transfer(containers[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(containers[0]);
                 } 
@@ -142,9 +141,6 @@ function fillContainer(creep) {
     var container = Game.getObjectById(containerIDs[0]);
     if(creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
         creep.moveTo(container); //TODO: replace with path
-    }
-    if(creep.pos.isNearTo(sourceID)) {
-        creep.harvest(sourceID);
     }
 }
 

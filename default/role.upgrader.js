@@ -1,18 +1,39 @@
 /*var leftMine= '576a9cb857110ab231d899fa';
 var rightMine='576a9cb857110ab231d899f8';
-
 var controlSource = leftMine; //left mine
 var state = 'spawned'; */
 
-var containerID = '5773f5d774e2c6695fefdb07';
+var containerID = '577acd04d33b4b4d0f4bf616';
+var linkID = '5790ce3942b995c61809fa8d';
+var secondContainerID = '577acd04d33b4b4d0f4bf616';
 var container = undefined;
 var untilPathRecalc = 2;
 var meanPathLengthController = 20;
 
+var minContVal = 200;
+
 var roleUpgrader = {
     
-    /** @param {Creep} creep **/
     run: function(creep) {
+        
+      //###################################### death logic
+	   /* if(creep.ticksToLive <= 35) {
+	        
+    	     var targets = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                    filter: (structure) => {
+                        return ( structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_EXTENSION ||
+                                structure.structureType == STRUCTURE_TOWER) && _.sum(structure.energy) < structure.energyCapacity;
+                    }
+                    });
+                    
+            if(targets.length > 0) {
+                creep.moveTo(targets[0]);
+                if(creep.transfer(targets[0], RESOURCE_ENERGY, creep.carry.energy) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(targets[0]);
+                }
+            }
+	    }*/
+	    //####################################
         
          if(creep.memory.state == undefined) {
             creep.memory.state = 'fill';
@@ -23,7 +44,8 @@ var roleUpgrader = {
         }
         
         container = Game.getObjectById(containerID);
-        
+        var link = Game.getObjectById(linkID);
+
         //creep can't carry more, goto controller
         if(creep.carry.energy == creep.carryCapacity || creep.memory.stillWork) {
             creep.memory.state = 'work';
@@ -34,8 +56,12 @@ var roleUpgrader = {
             creep.memory.state = 'fill';
             var stateChanged = hasStateChanged(creep);
             var activeCarryParts = getActiveBodyPartCount(creep, CARRY);
-            fillFromContainer(creep, stateChanged, activeCarryParts * 50);
-            
+
+            fillFromContainer(creep, stateChanged, creep.carryCapacity,link);
+                        creep.moveTo(link);
+
+            //upgradeContr(creep, stateChanged); 
+
         //container is empty
         /*
             TODO: creeps nehmen trotzem gleich viel mit. wahrschienlich weil sie ein paar mal eine kleinere menge aufnehmen. flag benötigt!
@@ -45,25 +71,43 @@ var roleUpgrader = {
             var stateChanged = hasStateChanged(creep);
             var activeWorkParts = getActiveBodyPartCount(creep, WORK);
             var energyAmount = creep.ticksToLive / activeWorkParts;
-            fillFromContainer(creep, stateChanged, energyAmount);
+            fillFromContainer(creep, stateChanged, creep.carryCapacity, link);
+
         }
         
         creep.memory.stateBefore = creep.memory.state;
 	}
 };
 
-function fillFromContainer(creep, stateChanged, energyAmount) {
-    if(_.sum(container.store) > 0) {
-        //mit nearto ersetzten
-        if(creep.pos.isNearTo(container)) {
-            container.transfer(creep, RESOURCE_ENERGY, energyAmount - creep.carry.energy);
-        } else goto(creep, stateChanged, container);
-
-    //idle to reduce cpu load  
+function fillFromContainer(creep, stateChanged, energyAmount,link) {
+    if(link.energy > minContVal) {
+     
+        if(creep.withdraw(link, RESOURCE_ENERGY, energyAmount - creep.carry.energy) == ERR_NOT_IN_RANGE) {
+            if(creep.pos.getRangeTo(link) == 0){
+                creep.moveTo(36,36);
+            } else {
+                if(creep.move(creep.pos.getDirectionTo(link)) == ERR_NO_PATH) {
+                    creep.move(creep.pos.getDirectionTo(link));
+                }
+            }
+        }//else goto(creep, stateChanged, link);
     } else {
-        if(!creep.pos.isNearTo(container)) {
-            goto(creep, stateChanged, container);
-        }
+        /*if(_.sum(container.store) > minContVal) {
+            //mit nearto ersetzten
+            if(creep.pos.isNearTo(container)) {
+                container.transfer(creep, RESOURCE_ENERGY, energyAmount - creep.carry.energy);
+                
+            } else goto(creep, stateChanged, container);
+    
+        //idle to reduce cpu load  
+        } else {
+            var container2 = Game.getObjectById(secondContainerID);
+            if(container2.store.energy> 0) {
+               if(container2.transfer(creep, RESOURCE_ENERGY, energyAmount - creep.carry.energy)==ERR_NOT_IN_RANGE) {
+                   creep.moveTo(container2);
+               }
+            }
+        } */
     }
 }
 

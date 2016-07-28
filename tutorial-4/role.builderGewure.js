@@ -11,7 +11,7 @@ var closestSource = leftMine; */
 
 var reHarvestFactor = 20; //if only 30 %energy are left, the creep will gather again
 var reFillFactorEmptySource = 15;
-//var storageID = '5772838880db66a6420cf328';
+var storageID = '577529b4efd3405c4bb43bbd';
 var containerIDs = ['5773cc3684ed25e4699c070c','5773f5d774e2c6695fefdb07'];
 
 var idlePosX = 35;
