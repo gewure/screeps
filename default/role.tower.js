@@ -34,7 +34,7 @@ var roleTower = {
             if(hostileCreeps.length > 0 ) { //TODO rewrite for healer and attack if under range 20
                     energySaveFaktor = 0; // use  up to 97% of energy
                     if(hostileCreeps.length > 1){
-                        if((Game.time%3)==0) {
+                        if((Game.time%2)==0) {
                             tower.attack(badCreep);
                         }else {
                             tower.attack(badCreep2);

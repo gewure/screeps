@@ -60,6 +60,8 @@ var roleOtherRoomMineralHarvester = {
 };
 
 function harvestSource(creep, stateChanged) {
+    var text = Math.random()+"!!!";
+    creep.say(text);
     if(mineral.mineralAmount > 0) {
       if(creep.harvest(mineral) == ERR_NOT_IN_RANGE) {
         gotoSource(creep, stateChanged);

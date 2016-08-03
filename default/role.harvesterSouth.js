@@ -5,14 +5,14 @@ var roleHarvesterSouth = {
     run: function(creep) {
         
         //var sources = creep.pos.findClosestByPath(FIND_SOURCES);
-        var tolerance = 15;
+        var tolerance = 7;
       
         
         /*if(!sources) {
             sources = creep.pos.findClosestByRange(FIND_SOURCES);
         } */
         
-        if(creep.ticksToLive == 10) {
+        if(creep.ticksToLive == 30) {
             // respawn it..
             Game.spawns.Leningrad.createCreep([MOVE,MOVE, CARRY, CARRY, MOVE, CARRY,MOVE, CARRY,CARRY,MOVE, WORK, WORK, WORK,WORK], undefined, {role:'harvesterSouth'});
             console.log('Room3 makes a new Harvester...');
@@ -27,22 +27,25 @@ var roleHarvesterSouth = {
         }
         
         if(creep.memory.dist && creep.carry.energy == 0 ) {
-                    var sources = creep.room.find(FIND_SOURCES);
+            var sources = creep.room.find(FIND_SOURCES);
 
             creep.memory.dist = false;
 
-            if((sources[0].energy/10  > sources[0].ticksToRegeneration -tolerance)) {
+            if((sources[1].energy/10  > sources[1].ticksToRegeneration -tolerance)) {
                 //creep.say('s0: '+sources[0].energy/10/sources[0].ticksToRegeneration);
                  source = creep.pos.findClosestByPath(FIND_SOURCES);
+                 if(source.energy <1) {
+                     source = sources[1];
+                 }
                  creep.say('searchin..');
-            } else if((sources[1].energy/10  > sources[1].ticksToRegeneration - tolerance)){
+            } else if((sources[0].energy/10  > sources[0].ticksToRegeneration - tolerance)){
                 //creep.say('s1: '+sources[1].energy/10/sources[1].ticksToRegeneration);
                 source = sources[1];
                 creep.say('s1 OK');
 
             } else {
-                if(sources[0].energy > sources[1].energy*1.1) {
-                    source = sources[0];
+                if(sources[1].energy > sources[0].energy*1.1) {
+                    source = sources[1];
                     creep.say('s0 OK');
                 } else {
                     source = creep.pos.findClosestByPath(FIND_SOURCES);
@@ -52,13 +55,19 @@ var roleHarvesterSouth = {
         
         }
         
-        if(!creep.memory.dist && creep.carry.energy == creep.carryCapacity ) {
-            creep.memory.dist = true;
-        }
+        //if(!creep.memory.dist && creep.carry.energy == creep.carryCapacity ) {
+          //  creep.memory.dist = true;
+        //}
         
         if(creep.carry.energy < creep.carryCapacity && !creep.memory.dist) {
             var source =creep.pos.findClosestByPath(FIND_SOURCES);
-
+            if(source.energy == 0) {
+               var newS = creep.room.find(FIND_SOURCES)[1];
+                if(newS != source) {
+                    source = newS;
+                } 
+            
+            }
             //creep.say('sources');
             if(creep.harvest(source) == ERR_NOT_IN_RANGE) {
                 creep.moveTo(source);

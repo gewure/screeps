@@ -17,7 +17,7 @@ var roleContHarv1 = {
     run: function(creep) {
         
         //#### room stat
-       // utils.creepSay(creep, '' +Math.ceil(roomStat.getTotalEnergy(creep.room)/1000)+'k', 3);
+        //utils.creepSay(creep, '' +Math.ceil(roomStat.getTotalEnergy(creep.room)/1000)+'k', 3);
         
         if(creep.ticksToLive==42) {
             Game.spawns.ImNoobPlzDontKill.createCreep([WORK, WORK, WORK,WORK, WORK, CARRY, MOVE], undefined, {role:'contHarv1'});

@@ -14,13 +14,13 @@ var utils = {
   },
   isFriendlyCreep: function(creep)
   {
-    if(creep.owner.username == 'gewure')
+    if(creep.owner.username == 'bldinator')
     return true;
     return false;
   },
   creepSay(creep, message, eachCycle = 1)
   {
-    utils.onlyDoTicks(function() {creep.say(message, true)}, eachCycle, 4);
+    utils.onlyDoTicks(function() {creep.say(message)}, eachCycle, 4);
   },
   isNear: function(targetA, targetB)
   {
@@ -69,12 +69,12 @@ var utils = {
     return targets[Math.ceil(Math.random()*(targets.length -1))];
   },
   getCreepInfo: function(creep)
-  {
+  { // TODO away with the comments!
     var squadName = '';
-    if(creep.memory.additional.squad != undefined)
-    squadName = ' [' + creep.memory.additional.squad + ']';
+   // if(creep.memory.additional.squad != undefined)
+    squadName = ' [' + /*creep.memory.additional.squad */ 'TODO ' + ']';
     
-    return creep.name + squadName + '(' + creep.room.name + ';' + creep.ticksToLive + 'TTL;' + creep.carry[RESOURCE_ENERGY] + 'E/' + creep.carryCapacity + ')';
+    return '';  //TODO:  creep.name + squadName + '(' + creep.room.name + ';' + creep.ticksToLive + 'TTL;' + creep.carry[RESOURCE_ENERGY] + 'E/' + creep.carryCapacity + ')';
   },
   
   getDistanceBetweenTargets: function(targetA, targetB)

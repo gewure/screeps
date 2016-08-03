@@ -56,11 +56,11 @@ var roleOtherRoomUpgrader = {
                 var link = Game.getObjectById('57881083f65bca74406e1b09');
                 
                 if(link.energy > 230 ) {
-                    if(!creep.pos.isNearTo(container)) {
-                        if(creep.withdraw(link,RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    creep.say('link--',true);
+                    if(creep.withdraw(link,RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                             creep.moveTo(link);
-                        }
-                    } else if(container.store[RESOURCE_ENERGY] > creep.carryCapacity ) {
+                    }
+                    if(container.store[RESOURCE_ENERGY] +254040> creep.carryCapacity ) {
                         if(container.transfer(creep,RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                             creep.moveTo(container);
                         }

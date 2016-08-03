@@ -1,44 +1,57 @@
 //############ modules
-var utiles = require('utils');
+var utils = require('utils');
 var roomStat = require('roomStatistics');
 var roleStream = require('role.Stream');
+
+var roomManager = require('roomManager');
+var roleManager = require('roleManager');
+var creepManager = require('creepManager');
+var combatManager = require('combatManager');
+
 //############ roles
 var roleHarvester = require('role.harvester');
-var roleHarvesterSouth = require('role.harvesterSouth');
-var roleFlagConHarvester = require('role.flagConHarvester');
+//var roleHarvesterSouth = require('role.harvesterSouth');
+//var roleFlagConHarvester = require('role.flagConHarvester');
 var roleUpgrader = require('role.upgrader');
 var roleBuilder = require('role.builder');
 var roleRepairer = require('role.repairer');
-var roleContHarv1 = require('role.contHarv1');
-var roleContHarv2 = require('role.contHarv2');  // harvests in other room!
-var roleTransporter = require('role.transporter');
-var roleCollector = require('role.collector');
-var roleTower = require('role.tower');
-var roleBalancer = require('role.balancer');
-var roleExeHarvester1 = require('role.exeHarvester1');
-var roleMelee = require('role.melee');
+//var roleContHarv1 = require('role.contHarv1');
+//var roleContHarv2 = require('role.contHarv2');  // harvests in other room!
+//var roleTransporter = require('role.transporter');
+//var roleCollector = require('role.collector');
+//var roleBalancer = require('role.balancer');
+//var roleExeHarvester1 = require('role.exeHarvester1');
+
 var rolePionier = require('role.pionier');
-var roleDismantler = require('role.dismantler');
-var rolePowerHarv = require('role.powerHarv');
-var roleClaimer = require('role.claimer');
-var roleOtherRoomUpgrader = require('role.otherRoomUpgrader');
-var roleOtherRoomTransporter = require('role.otherRoomTransporter');
-var roleOtherRoomBuilder = require('role.otherRoomBuilder');
-var roleOtherRoomBalancer = require('role.otherRoomBalancer');
-var roleOtherRoomCollector = require('role.otherRoomCollector');
-var roleLink = require('role.link');
-var roleTerminal = require('role.terminal');
-var roleCrossRoomTransporter = require('role.crossRoomTansporter');
-var roleMineralHarvester = require('role.mineralHarvester');
-var roleOtherRoomMineralHarvester = require('role.otherRoomMineralHarvester');
+//var roleDismantler = require('role.dismantler');
+//var roleClaimer = require('role.claimer');
+//var roleOtherRoomUpgrader = require('role.otherRoomUpgrader');
+//var roleOtherRoomTransporter = require('role.otherRoomTransporter');
+//var roleOtherRoomBuilder = require('role.otherRoomBuilder');
+//var roleOtherRoomBalancer = require('role.otherRoomBalancer');
+//var roleOtherRoomCollector = require('role.otherRoomCollector');
+//var roleCrossRoomTransporter = require('role.crossRoomTansporter');
+//var roleMineralHarvester = require('role.mineralHarvester');
+//var roleOtherRoomMineralHarvester = require('role.otherRoomMineralHarvester');
 var roleStorer = require('role.storer');
-var roleOtherRoomStorer = require('role.otherRoomStorer');
+//var roleOtherRoomStorer = require('role.otherRoomStorer');
 var roleStoreMover = require('role.storeMover');
 var roleRanged = require('role.ranged');
 var roleTrader = require('role.trader');
-var roleForeignHarvester = require('role.foreignHarvester');
+//var roleForeignHarvester = require('role.foreignHarvester');
 var roleTransporterPlus = require('role.transporterPlus');
+
+//fight
+var roleMelee = require('role.melee');
 var roleHealer = require('role.healer');
+var rolePowerHarv = require('role.powerHarv');
+
+// buildings
+var roleLab = require('role.lab');
+var roleLink = require('role.link');
+var roleTerminal = require('role.terminal');
+var roleTower = require('role.tower');
+//var roleLabWorker = require('role.labWorker');
 
 // CPU profiler
 //var profiler = require('screeps-profiler');
@@ -52,17 +65,18 @@ var roomname = 'E31N1';
 var storageID = '577b2f88e03b2946707baba5';
 var contIDs = ['579161da6ee725205e65df76','57796949720916567dc376ca','5790e8a08e8b0a292cbe4989', '5779b1268eef705e48c33a6e', '5789f4ef237741a55ba23e42']; // mineral con: 5789f4ef237741a55ba23e42
 var contStorIDs = ['579161da6ee725205e65df76','57796949720916567dc376ca','5790e8a08e8b0a292cbe4989', '5779b1268eef705e48c33a6e' ,'577b2f88e03b2946707baba5', '5789f4ef237741a55ba23e42'];//
-var towIDs = ['5779f6286ce428014acf2e71', '577ecaedd47f7a6d1f04ec04'];
+var towIDs = ['579edd04e6e3c11a56d99b9d','5779f6286ce428014acf2e71', '577ecaedd47f7a6d1f04ec04'];
 var linkIDs = ['5791029f12e9a1f3752777ce', '577f2b75f5dd02623e306006']; // from down to up
 var terminalID = '57873c64cf3a1f7c0baf3f53';
 var mineralContainerIDs = ['5789f4ef237741a55ba23e42'];
 var upgrLinkID = ['5790ce3942b995c61809fa8d'];
-var labIDs_LO = ['578b8b37db6021474ffa389a', '5789d6256ae4243427bb509c', '57881591ba0d6675329a0045']; // [0] = OUT, [1] = L, [2] = 0
+var labIDs_LO = ['57881591ba0d6675329a0045', '5789d6256ae4243427bb509c','578b8b37db6021474ffa389a']; // [0] = OUT, [1] = L, [2] = 0
+var labIDs_UO = ['579f5f5c4ab9cf9f3dffb239','579fc21f1b7f457311638c09','579f174fdf69035410208cc6']; // last ist out lab (bld style)
 
 
 //structures mainroom
-var minWallHitpoints = 370000;//345000;
-var minRampartHitpoints = 350000;//257000;
+var minWallHitpoints = 500000;//345000;
+var minRampartHitpoints = 610000;//257000;
 var minRoadPoints = 4000;
 var minContainerPoints = 200000;
 
@@ -78,7 +92,7 @@ var transportersCount = 1;
 
 //building
 var ulessWallIDs = []; //dismantleIDs: last items are first dismantled
-var dismantleTargetIDs=['5776e26b3c3de4474dcdc523'];//['57712fa2d1334bb7455781d6','5774dd07d02379476bb0e054','577b79b8c31706f86c805a2d'];//, //];
+var dismantleTargetIDs=['57702679d8ed880a7d40334f','5770466106c08fb00c6cf316','5776e26b3c3de4474dcdc523'];//['57712fa2d1334bb7455781d6','5774dd07d02379476bb0e054','577b79b8c31706f86c805a2d'];//, //];
 
 
 // OTHER ROOMS
@@ -90,7 +104,7 @@ var otherContainerStorIDs =  [ '5782d2f389d0e70f51a8f289', '5785398b91941a441c38
 var otherTowerIDs = ['578165832b0f16cb03ea73e4', '57887ac7c29d34de53a61c5e'];
 var otherLinkIDs = ['5790e50543f1b3f2295aaf0c', '57881083f65bca74406e1b09'];
 
-var allTowerIDs = ['578165832b0f16cb03ea73e4', '5779f6286ce428014acf2e71', '577ecaedd47f7a6d1f04ec04']; //578165832b0f16cb03ea73e4
+var allTowerIDs = ['579edd04e6e3c11a56d99b9d','578165832b0f16cb03ea73e4', '5779f6286ce428014acf2e71', '577ecaedd47f7a6d1f04ec04']; //578165832b0f16cb03ea73e4
 
 // room3 ids
 var r3_towerIDs = ['579518473cbd825f5b500e79','579892977674a91935668971'];
@@ -99,6 +113,7 @@ var r3_linkIDs = ['5798938ed13e873d2b44121d','57986e71cbde07c62c2e9554'];
 var r3_exe_south_flag= 'E27N3_1';
 var r3_storage = 'bldCont';
 var r3_exe_south_ctrl_flag = 'E27N3_CTRL';
+var r3_exe_cont ='exeCont';
 
 //other room units
 var otherRoomUpgraderCount = 1;
@@ -114,18 +129,75 @@ var otherRoomBuilderCount = 0;
 
 module.exports.loop = function () {
     
+        utils.initialise();
+        
+            combatManager.definesquads();
+            roomStat.init();
+    
         //stream-walking(Gaensemarsch!)
         //roleStream.runAll();
     
-        roomStat.update('E31N2');
-        roomStat.update('E31N1');
-        roomStat.update('E28N3');
+        //roomStat.update('E31N2');
+        //roomStat.update('E31N1');
+        //roomStat.update('E28N3');
         //roomStat.update('E30N4');
         try{
         //roomStat.update('E32N2');
         } catch (blalbla) {
             //yaya
         }
+        
+        //############################################################### INTEGRATE below##################
+
+        // Update all statistics
+        for(var name in Game.rooms)
+        roomStat.update(name);
+        
+        for(var name in Game.rooms) {
+          
+          if(roomManager.rooms[name] != undefined)
+          {
+            var room = Game.rooms[name];
+            var foundCreeps = creepManager.findCreeps(room);
+            console.log('Room ' + room.name + ' ' + roomStat.getEnergyPerTick(room) + 'e/tick ' + room.energyAvailable+ ' energy. Total: ' + roomStat.getCurrentEnergy(room) + '(' + (roomStat.getCurrentEnergy(room) /roomStat.getTotalEnergy(room)* 100.0) + '%) (' + roomStat.getCurrentEnergyContainerLink(room) + '(' + (roomStat.getCurrentEnergyContainerLink(room) /roomStat.getTotalEnergyContainerLink(room)* 100.0) + '%)' + ' containers/links, ' +  + roomStat.getCurrentEnergyStorage(room) + '(' + (roomStat.getCurrentEnergyStorage(room) /roomStat.getTotalEnergyStorage(room)* 100.0) + '%) ' + ' storage, ' + roomStat.getCurrentEnergyExtensionsAndSpawn(room) + '/' + roomStat.getTotalEnergyExtensionsAndSpawn(room)  + ' total (' + (roomStat.getCurrentEnergyExtensionsAndSpawn(room) /roomStat.getTotalEnergyExtensionsAndSpawn(room)* 100.0) + '%)' + ' extensions/spawn)');
+            var squadsNeeded = combatManager.getNeededsquads(room);
+            
+            var needed = roomManager.rooms[name].run(room , foundCreeps, squadsNeeded, roomStat);
+            creepManager.runRoom(room, foundCreeps.creepsByRoleSpecial, needed.neededCreeps);
+            roomManager.updateStreetPheromons(name, roomStat);
+            
+            //for(var l in needed.links)
+            //roleManager.getByName(needed.links[l].role).run(room, needed.links[l]);
+            
+            /*
+            var i = 0;
+            for(var t in roomStat.structures[room.name][STRUCTURE_TOWER])
+            {
+              var role = needed.towerRoles[i];
+              console.log(role);
+              roleManager.getByName(role).run(roomStatistics.structures[room.name][STRUCTURE_TOWER][t]);
+              i++;
+            }  */
+          } 
+        } 
+        
+         creepManager.run(roomStat);
+    // Run tower
+   /* for(var name in Game.rooms) {
+      var room = Game.rooms[name];
+    } */
+    
+    // Memory clear
+    for(var name in Memory.creeps)
+    {
+      if(!Game.creeps[name])
+      delete Memory.creeps[name];
+    }
+
+        //############################################################### INTEGRATE ^^^^####################
+        
+        
+        
        //console.log(' TOTAL ROOM1 ENERGY: '+roomStat.getTotalEnergy('E31N2'));
       //profiler.wrap(function() { //CPU-PROFILER
    
@@ -137,10 +209,36 @@ module.exports.loop = function () {
         for(var roomName in Game.rooms){//Loop through all rooms your creeps/structures are in
             var room = Game.rooms[roomName];
             
+            if(!room.memory.links) {
+                room.memory.links = {}; // links
+                 var links = room.find(FIND_MY_STRUCTURES,  { 
+                    filter: (struc) => {
+                        return (struc.structureType==STRUCTURE_LINK);
+                    }
+                });
+                 for(var l in links){
+                    var link = links[l];
+                    link.memory = room.memory.links[link.id] = {}; //Create a new empty memory object for this source
+                    //Now you can do anything you want to do with this source
+                    //for example you could add a worker counter:
+                    link.memory.IN = true;
+                }
+            } else { // links-memory already exists
+                 var links = room.find(FIND_MY_STRUCTURES,  { 
+                    filter: (struc) => {
+                        return (struc.structureType==STRUCTURE_LINK);
+                    }
+                });
+                for(var i in links){
+                    var link = links[i];
+                    link.memory = room.memory.links[link.id]; //Set the shortcut
+                   // console.log('source memory: '+source.memory);
+                }
+            }
             if(!room.memory.sources){//If this room has no sources memory yet
                 room.memory.sources = {}; //Add it
                 var sources = room.find(FIND_SOURCES);//Find all sources in the current room
-                
+               
                 for(var i in sources){
                     var source = sources[i];
                     source.memory = room.memory.sources[source.id] = {}; //Create a new empty memory object for this source
@@ -166,6 +264,12 @@ module.exports.loop = function () {
         }
     }
     
+    for(var link in Memory.links) {
+        if(!Game.getObjectById(link)) {
+            delete Memory.links[link];
+        }
+    }
+    
     //######################## links
     roleLink.run(linkIDs[1], linkIDs[0]);
     roleLink.run(linkIDs[1],upgrLinkID[0]); 
@@ -177,7 +281,10 @@ module.exports.loop = function () {
    //3rd room link
    roleLink.run(r3_linkIDs[1],r3_linkIDs[0]);
    //########################### TERMINAL
-   roleTerminal.run(terminalIDs[1], terminalIDs[0]);
+   roleTerminal.run(/*terminalIDs[1], terminalIDs[0]*/);
+   
+   //############################# LABS
+   roleLab.run(Game.room,labIDs_LO);
    //############################# TOWER ################
    //####### tower repair goals..
 
@@ -248,11 +355,7 @@ module.exports.loop = function () {
     enemysFound1.forEach(en => Memory.enemysFound1.push(en.id) );
     enemysFound2.forEach(en => Memory.enemysFound2.push(en.id) );
     enemysFound3.forEach(en => Memory.enemysFound3.push(en.id) );
-   
-    //console.log('ENEMIES FOUND:');
-    //console.log(Memory.enemysFound2);
-    //console.log(Memory.enemysFound1);
-     
+
    //try {
        if(Memory.closestDmgArr1 && Memory.room2Arr && Memory.enemysFound1 && Memory.enemysFound2 && Memory.enemysFound3 && Memory.room2Arr) {
            
@@ -263,7 +366,7 @@ module.exports.loop = function () {
            }
            for(var i = 0; i < towIDs.length; i++) { //main room
                roleTower.run(Game.getObjectById(towIDs[i]), ulessWallIDs, Memory.closestDmgArr1, Memory.enemysFound1);
-               //console.log('TOWER: ' +Game.getObjectById(towIDs[i]) + ' is ready');
+               console.log('TOWER: ' +Game.getObjectById(towIDs[i]) + ' is ready');
            } 
            for(var i = 0; i < r3_towerIDs.length; i++) { //main room
                roleTower.run(Game.getObjectById(r3_towerIDs[i]), ulessWallIDs, Memory.room3Arr, Memory.enemysFound3);
@@ -272,10 +375,6 @@ module.exports.loop = function () {
        } else {
                console.log('TOWER things not defined');
            } 
-  // } catch(serializationException) {
-    //   console.log('serialisationException with da towers');
-   //}
-   //}
     
         //####################### WAR ?! #####################
          var enemysFound = false;
@@ -306,21 +405,13 @@ module.exports.loop = function () {
     
          }
         
-  
-     //#################################### other room ####################
-     var exeRoomController = Game.getObjectById('576a9c7f57110ab231d892fa');
-  
-     /*f(exeRoomController.ticksToDowngrade == 1000) {
-         console.log('spawning a new otherroom upgrader to prevent downgrade ');
-         Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, MOVE, MOVE, MOVE, WORK, WORK, CARRY, CARRY, CARRY, CARRY], undefined, {role:'otherRoomUpgrader'});
-     } */
 
      //############################## CONTROLLER LEVEL #######################
        
    // console.log('controller LVL = ' + room.controller.level + ' with ' + room.controller.progress + ' / '+ room.controller.progressTotal);
   
      //######################### key economy #############################
-     if((Game.time%30)==0) {
+     /*if((Game.time%30)==0) {
          if(Game.rooms['E31N2'].find(FIND_CONSTRUCTION_SITES).length >= 1) {
             builderCount = 1; // builder is needed
          } else {
@@ -332,19 +423,14 @@ module.exports.loop = function () {
           } else {
                  otherRoomBuilderCount=0;
           }
-     }
-   // room.memory.collectorTicks--;
-   //  if(room.memory.collectorTicks < 100) {
-   //      console.log('collector dies soon, spawn a new one now!!');
-   //  }
-   
+     } */
    
   /* _.each(Game.creeps,function(c) {
 console.log(c.name);
 console.log(c.memory.role);
 }); */
     //####################### just console log output ##########################
-    console.log('#################### fighter units: ');
+    /*console.log('#################### fighter units: ');
     var melees = _.filter(Game.creeps, (creep) => creep.memory.role == 'melee');
     console.log('Fighters: ' + melees.length);
     var rangeds = _.filter(Game.creeps, (creep) => creep.memory.role == 'ranged');
@@ -352,7 +438,7 @@ console.log(c.memory.role);
     console.log('#################### home room units: ');
     var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
     //console.log('Harvesters: ' + harvesters.length);
-     var harvestersSouth = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvesterSouth');
+     //var harvestersSouth = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvesterSouth');
   //  console.log('HarvestersSouth: ' + harvestersSouth.length);
     var flagHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'flagConHarvester');
     console.log('flagConHarvester: ' + flagHarvesters.length);
@@ -434,8 +520,14 @@ console.log(c.memory.role);
     
     var transporterPluss = _.filter(Game.creeps, (creep) => creep.memory.role == 'transporterPlus');
     console.log('transporterPlus :' + transporterPluss.length);
+    
+      var labWorkers = _.filter(Game.creeps, (creep) => creep.memory.role == 'labWorker');
+    console.log('labWorkers :' + transporterPluss.length);
+    
+    var upgraders3 = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
+    console.log('upgraders3 :' + upgraders3.length); */
 
-    //##################################### ROLES ############################
+    /*##################################### ROLES ############################
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
         switch(creep.memory.role) {
@@ -444,7 +536,7 @@ console.log(c.memory.role);
                 break;
             //----------------------------------------------------------------------------------------
             case 'foreignHarvester':
-                roleForeignHarvester.run(creep, r3_exe_south_flag, r3_storage);
+                roleForeignHarvester.run(creep, r3_exe_south_flag, r3_exe_cont);
                 break;
             //----------------------------------------------------------------------------------------
             case 'harvester':
@@ -566,13 +658,19 @@ console.log(c.memory.role);
             //----------------------------------------------------------------------------------------
              case 'storer':
                 //roleMineralHarvester.run(creep, sourceID, containerIDs, linkID, minerID);
-                roleStorer.run(creep,mineralContainerIDs, contStorIDs, towIDs, labIDs_LO, upgrLinkID, terminalID);
+                //creep, contIDs, contStorIDs, towIDs, labIDs_LO, labrLinkID, terminalID
+                roleStorer.run(creep,mineralContainerIDs, contStorIDs, labIDs_LO, upgrLinkID, terminalID);
                 break;
             //----------------------------------------------------------------------------------------
-             case 'storeMover':
+            /*case 'labWorker':
+                //roleMineralHarvester.run(creep, sourceID, containerIDs, linkID, minerID);
+                roleLabWorker.run(creep,mineralContainerIDs, contStorIDs, towIDs, labIDs_LO, upgrLinkID, terminalID);
+                break; */
+            //----------------------------------------------------------------------------------------
+           /*  case 'storeMover':
                 //roleMineralHarvester.run(creep, sourceID, containerIDs, linkID, minerID);
                 //creep, storageID, terminalID, linkID
-                roleStoreMover.run(creep, storageID, terminalID, linkIDs[1]);
+                roleStoreMover.run(creep,linkIDs[1]);
                 break;
             //----------------------------------------------------------------------------------------
             case 'pionierSmall':
@@ -595,8 +693,9 @@ console.log(c.memory.role);
             default:
             
         }   
-    }
+    } */
     
+if(false) {  /*  
    var extensions = Game.spawns.ImNoobPlzDontKill.room.find(FIND_MY_STRUCTURES, {
       filter: { structureType: STRUCTURE_EXTENSION }
     });
@@ -628,8 +727,8 @@ console.log(c.memory.role);
             console.log('Spawning a new collector [TIER 3] ');
            
         }
-        else if(transporters.length < 2) {
-            Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, CARRY, CARRY, CARRY, CARRY, MOVE], undefined, {role:'transporter'});
+        else if(transporters.length < 1) {
+            Game.spawns.Beograd.createCreep([MOVE, CARRY, CARRY, CARRY, CARRY, MOVE], undefined, {role:'transporter'});
             console.log('Spawning a new transporter [TIER 3] ');
         }
          else if(repairers.length < repairersCount) {
@@ -637,16 +736,16 @@ console.log(c.memory.role);
             console.log('Spawning a new repairer [TIER 3] ');
         }   
           else if(balancers.length < 0) {
-            Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, CARRY, CARRY], undefined, {role:'balancer'});
+            Game.spawns.Beograd.createCreep([MOVE, CARRY, CARRY], undefined, {role:'balancer'});
             console.log('Spawning a new balancer [TIER 3] ');
         }
         
         else if(builders.length < builderCount) {
-            Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK,WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE], undefined, {role:'builder'});
+            Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK, WORK, CARRY, CARRY,MOVE, CARRY,CARRY, MOVE, MOVE, CARRY, CARRY, CARRY, MOVE, MOVE], undefined, {role:'builder'});
             console.log('Spawning a new builder [TIER 3]');
         }
-         else if(upgraders.length < upgraderCount) {
-            Game.spawns.ImNoobPlzDontKill.createCreep([/*WORK,WORK,WORK,WORK, WORK, WORK,WORK,WORK,WORK, WORK,*/WORK,WORK,WORK,WORK, WORK, WORK,WORK,WORK,WORK,WORK,WORK, CARRY,CARRY,MOVE, MOVE,MOVE,MOVE], undefined, {role:'upgrader'});
+         else if(upgraders.length < 1) {
+            Game.spawns.ImNoobPlzDontKill.createCreep([/*WORK,WORK,WORK,WORK, WORK, WORK,WORK,WORK, *//*MOVE,WORK, WORK,WORK,WORK,WORK,WORK,WORK, WORK, WORK, WORK,WORK,WORK,WORK,WORK,WORK, CARRY,CARRY,MOVE, MOVE,MOVE,MOVE], undefined, {role:'upgrader'});
             console.log('Spawning a new upgrader [TIER 3] ');
         }
          else if(dismantlers.length < 0) {
@@ -661,21 +760,29 @@ console.log(c.memory.role);
             Game.spawns.ImNoobPlzDontKill.createCreep([CARRY,WORK,MOVE], undefined, {role:'mineralHarvester'});
             console.log('Spawning a new cross-Room-Transporter  ');
         }
-        else if(storers.length < 1) {
-            Game.spawns.ImNoobPlzDontKill.createCreep([CARRY,MOVE], undefined, {role:'storer'});
+        else if(storers.length < 0) {
+            Game.spawns.ImNoobPlzDontKill.createCreep([CARRY,MOVE, CARRY, MOVE, CARRY, CARRY], undefined, {role:'storer'});
             console.log('Spawning a new storer  ');
         }
+        else if(labWorkers.length < 0) {
+            Game.spawns.ImNoobPlzDontKill.createCreep([CARRY,MOVE, CARRY], undefined, {role:'labWorker'});
+            console.log('labWorker Spawn  ');
+        }
        else if(pioniers.length < 0) {
-                Game.spawns.ImNoobPlzDontKill.createCreep([WORK,WORK, WORK,CARRY, CARRY, CARRY,MOVE, MOVE, CARRY,CARRY, MOVE, MOVE, MOVE], undefined, {role:'pionier'});
+                Game.spawns.Beograd.createCreep([WORK,WORK, WORK,CARRY, CARRY, CARRY,MOVE, MOVE, CARRY,CARRY, MOVE, MOVE, MOVE], undefined, {role:'pionier'});
                 console.log('Spawning a new pionier for BLD  ');
             }
         else if(storeMovers.length < 1) {
             Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, MOVE, CARRY,CARRY, CARRY, CARRY], undefined, {role:'storeMover'});
             console.log('Spawning a new stroeMover ');
         }
-        else if(traders.length < 5) {
-            Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, CARRY,CARRY, MOVE, CARRY, CARRY, MOVE, MOVE, MOVE, CARRY], undefined, {role:'trader'});
+        else if(traders.length < 0) {
+            Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, CARRY,CARRY, MOVE, CARRY, CARRY, MOVE, MOVE, CARRY, CARRY, CARRY, MOVE, CARRY], undefined, {role:'trader'});
             console.log('a trader is spawned ');
+        }
+        else if(repairers.length < 1) {
+            Game.spawns.Beograd.createCreep([MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK], undefined, {role:'repairer'});
+            console.log('Spawning a new repairer ');
         }
         
         // military! 
@@ -697,25 +804,38 @@ console.log(c.memory.role);
             Game.spawns.StPetersburg.createCreep([MOVE, TOUGH, TOUGH, MOVE, TOUGH, MOVE], undefined, {role:'ranged'});
             console.log('A ranged attacking creep ! ');
         }
-        
-        //power
-        if(true) {
-              if(powerHarvs.length < 5) {
-                Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, MOVE, MOVE, ATTACK, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, MOVE, ATTACK, MOVE, ATTACK, ATTACK, ATTACK, ATTACK,ATTACK, ATTACK, MOVE, ATTACK, MOVE, ATTACK], undefined, {role:'powerHarv'});
-                Game.spawns.StPetersburg.createCreep([MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, MOVE, MOVE, ATTACK, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, MOVE, ATTACK, MOVE, ATTACK, ATTACK, ATTACK, ATTACK,ATTACK, ATTACK, MOVE, ATTACK, MOVE, ATTACK], undefined, {role:'powerHarv'});
+    }
+    
+     //#########################Power-harvesting
+        if(false) {
+            console.log('POWER HARVESTING ON!');
+            // logik for automatisation goes here TODO
+            var powerAlmostDown = false;
+            //var powerBank = Game.getObjectById('');
+            
+             if(powerHarvs.length < 0) {
+                Game.spawns.ImNoobPlzDontKill.createCreep([MOVE,MOVE,MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,MOVE,ATTACK,ATTACK, ATTACK, ATTACK, ATTACK,ATTACK,ATTACK, ATTACK,ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,ATTACK, ATTACK, ATTACK], undefined, {role:'powerHarv'});
+                //Game.spawns.StPetersburg.createCreep([MOVE,MOVE,TOUGH, TOUGH, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, MOVE, MOVE, ATTACK, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, MOVE, ATTACK, MOVE, ATTACK, ATTACK, ATTACK, ATTACK,ATTACK, ATTACK, MOVE, ATTACK, MOVE, ATTACK], undefined, {role:'powerHarv'});
 
                 console.log('Spawning a new powerharvester ');
             }
-             else if(healers.length < 6) {
-                Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, HEAL, MOVE, HEAL, MOVE, HEAL, HEAL, HEAL, HEAL, MOVE, HEAL, HEAL], undefined, {role:'healer'});
+              if(healers.length < 0) {
+                Game.spawns.ImNoobPlzDontKill.createCreep([MOVE,MOVE, MOVE,MOVE, MOVE, MOVE,HEAL, MOVE, HEAL, MOVE, HEAL, HEAL, HEAL, HEAL, HEAL, HEAL,HEAL, MOVE,MOVE, HEAL, HEAL, HEAL], undefined, {role:'healer'}); //3000 each! :O
                             //Game.spawns.StPetersburg.createCreep([MOVE, ATTACK, MOVE, ATTACK, MOVE, ATTACK, ATTACK, ATTACK, ATTACK,ATTACK, ATTACK, MOVE], undefined, {role:'powerHarv'});
-                Game.spawns.StPetersburg.createCreep([MOVE, HEAL, MOVE, HEAL, MOVE, HEAL, HEAL, HEAL, HEAL, MOVE, HEAL, HEAL, ], undefined, {role:'healer'});
+               // Game.spawns.StPetersburg.createCreep([MOVE, HEAL, MOVE, HEAL, MOVE, HEAL, HEAL, HEAL, HEAL, MOVE, HEAL, HEAL, ], undefined, {role:'healer'});
     
                 console.log('Spawning a new healer ');
             }
+
+            if(false) {
+                 if(traders.length < 10) {
+                    Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, CARRY,CARRY, MOVE, CARRY, CARRY, MOVE, MOVE, CARRY, CARRY, CARRY, MOVE, CARRY], undefined, {role:'trader'});
+                    console.log('a trader is spawned ');
+                    Game.spawns.StPetersburg.createCreep([MOVE, CARRY,CARRY, MOVE, CARRY, CARRY, MOVE, MOVE, CARRY, CARRY, CARRY, MOVE, CARRY], undefined, {role:'trader'});
+                }
+            }
         }
-    }
-    
+        
     //############################# respawn second room
  
     if(extensionsSecond.length >= 10) {
@@ -723,15 +843,15 @@ console.log(c.memory.role);
             Game.spawns.StPetersburg.createCreep([WORK,WORK, CARRY, CARRY, CARRY,MOVE, MOVE, MOVE, MOVE, CARRY, MOVE, MOVE], undefined, {role:'exeHarvester1'});
             console.log('Spawning a new exeHarvester [TIER 3] ');
         }
-         else if(otherRoomTransporters.length < 1) {
-            Game.spawns.StPetersburg.createCreep([MOVE,CARRY,CARRY], undefined, {role:'otherRoomTransporter'});
+         else if(otherRoomTransporters.length < 2) {
+            Game.spawns.StPetersburg.createCreep([MOVE,CARRY,CARRY, MOVE, CARRY, CARRY], undefined, {role:'otherRoomTransporter'});
             console.log('Spawning a new otherRoomTransporter ');
         }
           else if(contHarv2s.length < 1) { 
             Game.spawns.StPetersburg.createCreep([WORK, WORK, WORK,WORK, WORK, CARRY, MOVE], undefined, {role:'contHarv2'});
             console.log('Spawning a new contHarv2 [TIER 3] ');
         }
-         else if(pioniers.length < 1) {
+         else if(pioniers.length < 0) {
             Game.spawns.StPetersburg.createCreep([WORK,WORK,WORK, CARRY, CARRY, CARRY,MOVE, MOVE, MOVE], undefined, {role:'pionier'});
             console.log('Spawning a new pionier [TIER 3] ');
         }
@@ -739,22 +859,23 @@ console.log(c.memory.role);
             Game.spawns.StPetersburg.createCreep([MOVE], undefined, {role:'claimer'});
             console.log('Spawning a new claimer ');
         }
-         else if(otherRoomUpgraders.length < otherRoomUpgraderCount) {
-            Game.spawns.StPetersburg.createCreep([MOVE, WORK, WORK,WORK, CARRY], undefined, {role:'otherRoomUpgrader'});
+         else if(upgraders.length < 0) {  /////////////////////////////////XXXXX ////X XX X/OOOOO X
+            Game.spawns.StPetersburg.createCreep([MOVE, WORK, WORK,WORK, CARRY], undefined, {role:'upgrader'});
             console.log('Spawning a new otherRoomHarvester ');
         }
+       
       
          else if(otherRoomBuilders.length < otherRoomBuilderCount) {
             Game.spawns.StPetersburg.createCreep([MOVE,MOVE, MOVE, WORK, WORK, WORK, CARRY, CARRY, CARRY], undefined, {role:'otherRoomBuilder'});
             console.log('Spawning a new otherRoomBuilder ');
         }
-         else if(otherRoomBalancers.length < otherRoomBalancerCount) {
+         else if(otherRoomBalancers.length < 0) {
             Game.spawns.StPetersburg.createCreep([MOVE,CARRY, CARRY, MOVE, CARRY, CARRY], undefined, {role:'otherRoomBalancer'});
             console.log('Spawning a new otherRoomBalancer ');
         }
-         else if(otherRoomCollectors.length < 1) {
-            Game.spawns.StPetersburg.createCreep([MOVE, CARRY, CARRY], undefined, {role:'otherRoomCollector'});
-            console.log('Spawning a new other room Collector ');
+         else if(transporterPluss.length < 0) {
+            Game.spawns.StPetersburg.createCreep([MOVE, CARRY, CARRY], undefined, {role:'transporterPlus'});
+            console.log('Spawning a new other transporterPluss ');
         }
           else if(otherRoomStorers.length < 0) {
             Game.spawns.StPetersburg.createCreep([MOVE, CARRY, CARRY], undefined, {role:'otherRoomStorer'});
@@ -769,12 +890,16 @@ console.log(c.memory.role);
     } 
     
     // 3rd room (get a fucking room manager and a respawn manager, ffs)
-     if(harvestersSouth.length < 4) {
-        Game.spawns.Leningrad.createCreep([MOVE,MOVE, MOVE,CARRY, CARRY, CARRY,WORK, WORK,WORK,WORK,CARRY, MOVE], undefined, {role:'harvesterSouth'});
+     if(harvestersSouth.length < 0) {
+        Game.spawns.Leningrad.createCreep([MOVE,MOVE, MOVE,CARRY, CARRY, CARRY,WORK, WORK,WORK,WORK,WORK,CARRY, MOVE], undefined, {role:'harvesterSouth'});
             console.log('Room3 makes a new harvester...');
     }
-    else if(harvesters.length < 2) { // is a upgrader.........
-        Game.spawns.Leningrad.createCreep([MOVE, MOVE,CARRY, WORK,CARRY,CARRY, CARRY, WORK, WORK,WORK,WORK, WORK,CARRY, MOVE, CARRY,MOVE], undefined, {role:'harvester'});
+    else if(transporterPluss.length <3) {
+        Game.spawns.Leningrad.createCreep([MOVE, MOVE,MOVE, CARRY,CARRY, CARRY, CARRY, CARRY, CARRY], undefined, {role:'transporterPlus'});
+        console.log('Spawning a new transporterPlus ');
+    }
+    else if(upgraders3.length < 1) { // is a upgrader.........
+        Game.spawns.Leningrad.createCreep([MOVE,MOVE, MOVE, MOVE,MOVE, MOVE,WORK,WORK, WORK,CARRY, CARRY,CARRY,CARRY, CARRY, WORK,WORK, WORK, WORK, WORK,WORK, WORK, WORK], undefined, {role:'upgrader'});
             console.log('Room3 makes a new upgrader...');
     }
     else if(traders.length < 0) {
@@ -782,44 +907,51 @@ console.log(c.memory.role);
             console.log('a trader is spawned ');
     }
     else if (foreignHarvesters.length < 3) {
-        Game.spawns.Leningrad.createCreep([WORK,WORK, WORK, CARRY, CARRY,CARRY,CARRY, MOVE, MOVE, MOVE, MOVE, MOVE], undefined, {role:'foreignHarvester'});
+        Game.spawns.Leningrad.createCreep([WORK,WORK, WORK,WORK, CARRY, CARRY,CARRY,CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,MOVE,MOVE], undefined, {role:'foreignHarvester'});
     }
      else if(claimers.length < 1) {
         Game.spawns.Leningrad.createCreep([MOVE, CLAIM], undefined, {role:'claimer'});
         console.log('Spawning a new claimer ');
     }
-     else if(pioniers.length < 1) {
+     else if(pioniers.length < 2) {
         Game.spawns.Leningrad.createCreep([MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK], undefined, {role:'pionier'});
         console.log('Spawning a new pionier ');
     }
-    else if(transporterPluss.length <2) {
-        Game.spawns.Leningrad.createCreep([MOVE, MOVE,MOVE, CARRY,CARRY, CARRY, CARRY, CARRY, CARRY], undefined, {role:'transporterPlus'});
-        console.log('Spawning a new transporterPlus ');
-    }
+     else if(repairers.length < 2) {
+        Game.spawns.Leningrad.createCreep([MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK], undefined, {role:'repairer'});
+        console.log('Spawning a new repairer ');
+    } */
+}
     
     //// WAR SPAWNS
       if(false) {
         if(transporters.length <2) {
             Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, CARRY, CARRY, CARRY, CARRY, MOVE], undefined, {role:'transporter'});
+            Game.spawns.StPetersburg.createCreep([MOVE, CARRY, CARRY, CARRY, CARRY, MOVE], undefined, {role:'otherRoomTransporter'});
         }
-        if(melees.length < 10) {
+        
+        else if(melees.length < 4) {
+            Game.spawns.ImNoobPlzDontKill.createCreep([MOVE,MOVE, MOVE,MOVE,MOVE, TOUGH,TOUGH, TOUGH, TOUGH,TOUGH, TOUGH, TOUGH,TOUGH, TOUGH, TOUGH,TOUGH, TOUGH,TOUGH, TOUGH,MOVE,MOVE, MOVE,MOVE,MOVE, MOVE, MOVE,MOVE,MOVE,MOVE], undefined, {role:'melee'});
+        }
+        
+        else if(melees.length < 0) {
             Game.spawns.ImNoobPlzDontKill.createCreep([MOVE,MOVE, MOVE,MOVE,MOVE,WORK, WORK,WORK,WORK,WORK,WORK,TOUGH, TOUGH,WORK, WORK,WORK,WORK,WORK,WORK,WORK,WORK,MOVE,MOVE, MOVE,MOVE,MOVE, MOVE, MOVE,MOVE,MOVE,MOVE], undefined, {role:'melee'});
             Game.spawns.StPetersburg.createCreep([MOVE,MOVE, MOVE,MOVE,MOVE,WORK, WORK,WORK,WORK,WORK, WORK,TOUGH,TOUGH, WORK,WORK,WORK,WORK,WORK,WORK,WORK,MOVE,MOVE, MOVE,MOVE,MOVE, MOVE, MOVE,MOVE,MOVE,MOVE], undefined, {role:'melee'});
         }
+        else if(healers.length < 4) {
+            Game.spawns.ImNoobPlzDontKill.createCreep([MOVE, HEAL, MOVE, HEAL, MOVE, HEAL, HEAL, HEAL, HEAL, MOVE, HEAL, HEAL], undefined, {role:'healer'}); //3000 each! :O
+            Game.spawns.StPetersburg.createCreep([MOVE, HEAL, MOVE, HEAL, MOVE, HEAL, HEAL, HEAL, HEAL, MOVE, HEAL, HEAL, ], undefined, {role:'healer'});
+    
+                console.log('Spawning a new healer ');
+            }
     }
-   
-          
       //}); // END CPU PROFILER
-    
-    
-    
+
         //stream-walking(Gaensemarsch!)
         //roleStream.runAll();
-    
-    
 }
-/*
-isFriendlyCreep: function(creep)
+
+/*isFriendlyCreep: function(creep)
   {
     if(creep.owner.username == 'bldinator')
     return true;

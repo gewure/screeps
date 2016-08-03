@@ -9,7 +9,12 @@ var roleForeignHarvester = {
     run: function(creep, sourceFlag, contFlag) {
         
         //creep.memory.room=homeRoom;
-        
+        //hacks: TODO generify this! 
+        try {
+            var testSource = Game.rooms['E27N3'].find(FIND_SOURCES);
+        } catch(otherRoomException) {
+            
+        }
         var source= Game.flags[sourceFlag];
         var cont = Game.flags[contFlag];
         
@@ -17,12 +22,35 @@ var roleForeignHarvester = {
             Game.spawns.Leningrad.createCreep([WORK, WORK, WORK,CARRY,CARRY, CARRY, MOVE,MOVE, MOVE, MOVE], undefined, {role:'foreignHarvester'});
         }
         
-        if(creep.ticksToLive==1){
-            container = Game.getObjectById(containerID);
-             if(creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(container, {reusePath:10}); //TODO: replace with path
-             }
+        // statemachine, expensive version
+        if(creep.carry.energy == 0) {
+            creep.memory.goHarvest = true;
+            creep.memory.goTransport = false;
+        } 
+        if(creep.carry.energy == creep.carryCapacity) {
+            creep.memory.goTransport == true;
+            creep.memory.stillHarvest = false;
+   
+        } 
+        if(creep.carry.energy > 0  && creep.carry.energy < creep.carryCapacity) {
+            creep.memory.stillHarvest = true;
+        } else {
+            creep.memory.stillHarvest = false;
+            creep.memory.goHavest = true;
         }
+        
+        if(creep.memory.goTransport) {
+            
+        }
+        
+        if(creep.memory.stateChange) {
+            //decrease sources.worker memory counter
+        
+           // creep.say(testSource[0].memory.workers+'--');
+            //testSource[0].memory.workers-=1;
+        } 
+        // -- end statemachine
+       
         //creep has no energy, go harvest
         if(creep.carry.energy < creep.carryCapacity) {
             
@@ -31,13 +59,20 @@ var roleForeignHarvester = {
                 creep.moveTo(source, {reusePath:10}); ///////<----------------
             } 
             
-            if(creep.pos.isNearTo(source)) {
+            
+            if(creep.pos.isNearTo(source)) { //not source, sourceflag ;9
+            
                 var sources = creep.room.find(FIND_SOURCES);
+                
                 if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(sources[0],{reusePath:10});
+                    creep.moveTo(sources[0],{reusePath:5});
                 }
+                if(creep.carry.energy == creep.carryCapacity) {
+                    creep.memory.stillHarvest = false;
+                }
+            } else {
+               
             }
-
         //creep can't carry more, goto container TODO: check for full!!
         } else if(creep.carry.energy == creep.carryCapacity ) {
         
@@ -49,11 +84,11 @@ var roleForeignHarvester = {
             } else {
                 var stor = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                     filter: (structure) => {
-                        return (structure.structureType == STRUCTURE_STORAGE);}
+                        return ((structure.structureType == STRUCTURE_STORAGE ||structure.structureType == STRUCTURE_CONTAINER)&& (structure.store[RESOURCE_ENERGY] +creep.carry.energy < structure.storeCapacity ));}
                 }); 
                 
                 if(creep.transfer(stor, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(stor, {reusePath:8}); //TODO: replace with path
+                    creep.moveTo(stor, {reusePath:5}); //TODO: replace with path
                 }
             }
 	    }

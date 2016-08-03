@@ -1,18 +1,16 @@
+var utils = require('utils');
 
-var idlePosX = 43;
-var idlePosY = 43;
-
-var roomToAttack='E30N2';
+var roomToAttack='E35N1';
 var protectMode = false;
 var isInAttackRoom = false;
 var hitslastTick = 1000;
 var fightMode = true;
 
-var minHits =0.67;
+var minHits =0.1;
 
-var rolePowerHarv = {
+var roleTank = {
     
-    /** @param {Creep} creep **/
+    name: 'roleTank',
     run: function(creep) {
        
      if(creep.pos.roomName == roomToAttack) {
@@ -36,39 +34,37 @@ var rolePowerHarv = {
       
         // if not a fresh spawn
         if(!creep.memory.freshSpawn) {
-            var target = Game.flags['idle']
-          
-          //only harvest till 500 hits..
+            creep.say('rdy');
             if(creep.hits >= creep.hitsMax*minHits) {
-                
-                /////////////////////////
-                 if(!creep.pos.isNearTo(Game.flags['target'])) {
-                    creep.moveTo(Game.flags['target']);
-                    }
-                /////////////////////
-            if(Game.getObjectById('57a0b8bc2a42ea277626d41b'))
-               if(Game.getObjectById('57a0b8bc2a42ea277626d41b').hits > 0)
-                if(creep.attack(Game.getObjectById('57a0b8bc2a42ea277626d41b')) == ERR_NOT_IN_RANGE) {
-                   creep.moveTo(Game.getObjectById('57a0b8bc2a42ea277626d41b'));
-                } else {
-                   if(!creep.pos.isNearTo(Game.flags['target'])) {
-                    creep.moveTo(Game.flags['target']);
-                    }
-                }
-                   /* var powerR = creep.pos.findClosestByRange(RESOURCE_POWER);
                     
-                    if(powerR) {
-                        creep.pickup(powerR);
-                    } */
-                
-            } else {
-                if(creep.hits+400< creep.hitsMax*minHits)
-                    if(!creep.pos.isNearTo(Game.flags['idle'])) {
-                creep.moveTo(Game.flags['idle']);
+                    /////////////////////////
+                     //if(!creep.pos.isNearTo(Game.flags['target'])) {
+                       // creep.moveTo(Game.flags['target']);
+                        //}
+                    /////////////////////
+                var closestEnemy = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS)    
+                if (closestEnemy)
+                if(!utils.isFriendlyCreep(closestEnemy)) {
+                    creep.say('POW!', true);
+                   if(closestEnemy.hits > 0)
+                    if(creep.attack(closestEnemy) == ERR_NOT_IN_RANGE) {
+                       creep.moveTo(closestEnemy);
+                    } else {
+                       if(!creep.pos.isNearTo(closestEnemy)) {
+                        creep.moveTo(closestEnemy);
+                        }
+                    }
+                     
+                    
+                } else {
+                    creep.say('he Friend',true);
+                    if(creep.hits< creep.hitsMax*minHits) {
+                        if(!creep.pos.isNearTo(Game.flags['idle'])) {
+                            creep.moveTo(Game.flags['idle']);
+                        }
+                    }
                 }
             }
-     
-        
             // move to spawn position
         } else {
           
@@ -99,4 +95,4 @@ function getActiveBodyPartCount(creep, part) {
 
 
 
-module.exports = rolePowerHarv;
+module.exports = roleTank;

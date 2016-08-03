@@ -1,6 +1,6 @@
 
 
-var roomToAttack='E33N3';
+var roomToAttack='E33N4';
 var protectMode = false;
 var isInAttackRoom = false;
 var hitslastTick = 1000;
@@ -34,11 +34,15 @@ var roleMelee = {
          creep.memory.isInAttackRoom=false;
      }
         if(!protectMode) {
+            
+          //  if(!creep.memory.isInMoveToRoom) {
+              //  creep.moveTo(Game.flags['moveTo']);
+           // }
             if(!creep.memory.isInAttackRoom) {
                 //console.log('WTTTTTTF');
-                creep.moveTo(Game.flags['target']);
+                creep.moveTo(Game.flags['idle'], {reusePath:6, ignoreRoads:true});
             } else {
-                creep.moveTo(Game.flags['target']);
+                creep.moveTo(Game.flags['idle'],{reusePath:6});
                // creep.say('ore ore', true);
             }
         }

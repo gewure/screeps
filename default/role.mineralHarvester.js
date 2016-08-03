@@ -21,7 +21,7 @@ var roleMineralHarvester = {
         source = Game.getObjectById(sourceID);
         mineralID = minerID;
         mineral = Game.getObjectById(mineralID);
-        storageObj = Game.getObjectById('5789f4ef237741a55ba23e42');
+        storageObj = creep.room.storage;
             //console.log(creep.carry[RESOURCE_LEMERGIUM]);
         containers = [];
         for(var i = 0; i < containerIDs.length; ++i) containers[containers.length] = Game.getObjectById(containerIDs[i]);
@@ -40,8 +40,8 @@ var roleMineralHarvester = {
                 var stateChanged = hasStateChanged(creep);
                 //fillLink(creep, stateChanged);
                 fillContainer(creep, stateChanged, storageObj); // TODODODODO
-            } else if(creep.carry[mineral.mineralType] == creep.carryCapacity && notFullContainer != undefined) {
-               // creep.say('here');
+            } else if(_.sum(creep.carry) == creep.carryCapacity||(creep.carry[mineral.mineralType] == creep.carryCapacity && notFullContainer != undefined) ) {
+                creep.say('full');
                 creep.memory.state = 'fill';
                 var stateChanged = hasStateChanged(creep);
                 fillContainer(creep, stateChanged, storageObj);

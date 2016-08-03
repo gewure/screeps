@@ -87,7 +87,7 @@ var roleOtherRoomStorer = {
             }
         
 	    } else {
-	        	            	        console.log(linkToFill);
+	        console.log(linkToFill);
 
 	        console.log('didnt return a mineralcontaining container');
 	        if(_.sum(creep.carry.L) > 0){

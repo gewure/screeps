@@ -10,9 +10,9 @@ var linkID = '57881083f65bca74406e1b09';
 
 // balancing - how much tolerance in %?
 var balance = 80;// the lower the more refilling
-var minContainerCont = 500;
+var minContainerCont = 300;
 var minContDifference = 0;
-var minStorageVal = 300000; // TODO
+var minStorageVal = 200000; // TODO
 //######################################## job is to keep the containers filled
 var roleBalancer = {
     
@@ -23,7 +23,7 @@ var roleBalancer = {
     
         var lowestC = getLowestContainer();
         var highestC = getHighestContainer();
-        var stor = Game.getObjectById(storageID);
+        var stor = creep.room.storage;
         var link = Game.getObjectById(linkID);
             
         creep.memory.lowestC=lowestC;
@@ -36,7 +36,6 @@ var roleBalancer = {
                         return ((structure.structureType == STRUCTURE_CONTAINER
                         || structure.structureType == STRUCTURE_SPAWN
                         || structure.structureType == STRUCTURE_EXTENSION
-                        || structure.structureType == STRUCTURE_STORAGE 
                         || structure.structureType == STRUCTURE_TOWER) && (_.sum(structure.energy) < _.sum(structure.energyCapacity)+creep.carry.energy));
                     }
             });
@@ -57,7 +56,7 @@ var roleBalancer = {
         //################ statemachine, cheap version
         if ((lowestC.store[RESOURCE_ENERGY] <  highestC.store[RESOURCE_ENERGY]-highestC.store[RESOURCE_ENERGY] *(balance/100)) && (highestC.store[RESOURCE_ENERGY] > minContainerCont *(balance/100)) && lowestC.store[RESOURCE_ENERGY] < highestC.store[RESOURCE_ENERGY]-minContDifference) { 
             console.log('balancer in balance mode!');
-            
+            creep.say('balabala');
             if(creep.carry[RESOURCE_UTRIUM]> 0) {
                 console.log('YES i have utrium');
                 var stor = Game.getObjectById('5785398b91941a441c38dd7e');
@@ -80,14 +79,14 @@ var roleBalancer = {
                 fillUp(creep, 'container');
             }
             
-            // fill link from container
+            
         } else if(creep.carry.energy == 0) {
             
             if(creep.carry[RESOURCE_UTRIUM]> 0) { // get rid of utrium!
                 console.log('YES i have utrium');
                 var stor = Game.getObjectById('5785398b91941a441c38dd7e');
-                 if(!creep.pos.isNearTo(stor)) {
-                        creep.moveTo(stor);
+                 if(!creep.pos.isNearTo(Game.rooms.E31N1.terminal)) {
+                        creep.moveTo(Game.rooms.E31N1.terminal);
                     } else { // is near storage, transfer _all_ resources
                         Object.keys(creep.carry).map((resource) => { creep.transfer(stor, resource) });
                         console.log('Collector transfered _all_ resources to storage');
@@ -97,7 +96,7 @@ var roleBalancer = {
             console.log('link energy room 2: '+ Game.rooms.E31N1.terminal.store[RESOURCE_ENERGY] + ' / ' + Game.rooms.E31N1.terminal.storeCapacity);
             console.log('storage amount : ' + stor.store[RESOURCE_ENERGY]);
             
-            if(stor.store[RESOURCE_ENERGY] > minStorageVal*(1+Math.random()*0.1)) {
+            if(stor.store[RESOURCE_ENERGY] > minStorageVal*(1+Math.random()*0.01)) {
                 console.log('storage amount : ' + stor.store[RESOURCE_ENERGY]);
                 //console.log(' ' +link.energy + ' ' + link.energyCapacity);
                 // bring energy from link  to storage
@@ -106,13 +105,28 @@ var roleBalancer = {
                         creep.moveTo(stor);
                     }
                 }
-                if(creep.carry.energy == creep.carryCapacity && link.energy > 500) {
+                if(creep.carry.energy == creep.carryCapacity && link.energy > 200) {
                     if(creep.transfer(stor, RESOURCE_ENERGY, creep.carry.energy) == ERR_NOT_IN_RANGE ) {
+                        creep.moveTo(stor);
+                    } 
+                }
+            }else if(stor.store[RESOURCE_UTRIUM] > 90000) {
+                console.log('storage Utrium:' + stor.store[RESOURCE_UTRIUM]);
+                //console.log(' ' +link.energy + ' ' + link.energyCapacity);
+                // bring energy from link  to storage
+                if( creep.carry[RESOURCE_UTRIUM]< creep.carryCapacity) {
+                    if(creep.withdraw(stor, RESOURCE_UTRIUM, creep.carryCapacity - _.sum(creep.carry)) == ERR_NOT_IN_RANGE ){
+                        creep.moveTo(stor);
+                    }
+                }
+                if(creep.carry[RESOURCE_UTRIUM] == creep.carryCapacity ) {
+                    if(creep.transfer(stor, RESOURCE_UTRIUM) == ERR_NOT_IN_RANGE ) {
                         creep.moveTo(stor);
                     } 
                 }
             } else {
                  if(creep.carry.energy == creep.carryCapacity) {
+                     creep.say('term plz');
                     if(creep.transfer(Game.rooms.E31N1.terminal, RESOURCE_ENERGY, creep.carry.energy) == ERR_NOT_IN_RANGE ) {
                         creep.moveTo(Game.rooms.E31N1.terminal);
                     } 
@@ -128,11 +142,12 @@ var roleBalancer = {
                       creep.moveTo(minContainer);
                   } 
                   if(_.sum(creep.carry) == creep.carryCapacity) {
-                      if(creep.transfer(stor, RESOURCE_UTRIUM, creep.carry.RESOURCE_UTRIUM) == ERR_NOT_IN_RANGE) {
-                          creep.moveTo(stor);
+                      if(creep.transfer(Game.rooms.E31N1.terminal, RESOURCE_UTRIUM, creep.carry.RESOURCE_UTRIUM) == ERR_NOT_IN_RANGE) {
+                          creep.moveTo(Game.rooms.E31N1.terminal);
                       }  
                   }
-               } else if(link.energy >350) {
+               } else if(link.energy >250) {
+                   creep.say('stor++');
                     if(creep.withdraw(link, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                           creep.moveTo(link);
                       }  
@@ -153,7 +168,7 @@ var roleBalancer = {
              console.log('storage amount : ' + stor.store[RESOURCE_ENERGY]+ ' IDLE');
 
                if(creep.carry.energy == creep.carryCapacity) {
-                   if(link.energy > 500 && stor.store[RESOURCE_ENERGY] > minStorageVal) {
+                   if(link.energy > 300 && stor.store[RESOURCE_ENERGY] > minStorageVal) {
                     if(creep.transfer(Game.rooms.E31N1.terminal, RESOURCE_ENERGY, creep.carry.energy) == ERR_NOT_IN_RANGE ) {
                         creep.moveTo(Game.rooms.E31N1.terminal);
                     } 

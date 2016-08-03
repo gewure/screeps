@@ -3,16 +3,16 @@
 */
 
 var sourceID = ''; // not used 
-var containerID = '5794449a93a10c621525fc8a'; // pionier takes from all containers, but he won't let this one fill up > 1800
-var flagName = 'room3_2';
+var containerID = ''; // pionier takes from all containers, but he won't let this one fill up > 1800
+var flagName = 'bldCont';
 
 var exeRoom = 'E28N3';
 var homeRoom = 'E31N2'; // not used
 var exeX = 34;
 var exeY = 24;
 
-var minWallHitpoints = 400000;
-var minRampartHitpoints = 400000;
+var minWallHitpoints = 600000;
+var minRampartHitpoints = 600000;
 var minRoadPoints = 4000;
 var minContainerPoints = 200000;
 
@@ -20,7 +20,7 @@ var source = sourceID;
 var container = containerID;
 var untilPathRecalc = 3;
 
-var minContainerCont = 300;
+var minContainerCont = 600;
 
 var rolePionier = {
     
@@ -65,9 +65,9 @@ var rolePionier = {
                 }
             } else { */
                 moveToRoom(creep);
-                 if(!creep.pos.isNearTo(Game.flags[flagName])) {
-                   creep.moveTo(Game.flags[flagName],  {reusePath:8});
-                 }
+                 /*if(!creep.pos.isNearTo(Game.flags[flagName])) {
+                   creep.moveTo(Game.flags[flagName]);
+                 } */
             //}
 
         } else {
@@ -112,10 +112,10 @@ function goHarvest(creep) {
         //var retval = creep.moveTo(sources[1]);
         //creep.say(retval);
         if(containers!=undefined) {
-            if( ( creep.carry.energy == 0 && creep.pos.getRangeTo(sources[0]) > 2 && creep.moveTo(sources[0])==0 ) || ( containers.id == containerID && containers.store[RESOURCE_ENERGY]>= 1700)) {
+            if( ( creep.carry.energy == 0 && creep.pos.getRangeTo(sources[1]) > 1 && creep.moveTo(sources[0])==0 ) || ( containers.id == containerID && containers.store[RESOURCE_ENERGY]>= 1700)) {
                 //creep.say('container!');
                 creep.say(containers.store[RESOURCE_ENERGY]);
-                if(creep.withdraw(containers, RESOURCE_ENERGY)==ERR_NOT_IN_RANGE) {
+                if(creep.withdraw(containers, RESOURCE_ENERGY, creep.carryCapacity)==ERR_NOT_IN_RANGE) {
                     creep.moveTo(containers);
                 }
             } else {
@@ -125,7 +125,8 @@ function goHarvest(creep) {
                 }
             }
         } else {
-            creep.say('harvest');
+            creep.say('harvest?');
+
             if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
                 creep.moveTo(sources[0]);
             }
@@ -226,15 +227,16 @@ function goBuild(creep) {
 
 // moving
 function moveToRoom(creep) {
-    creep.say('move');
-     
+ 
 
     if(creep.pos.room == exeRoom) {
+        creep.say('no move?');
         return;
     } else {
+        console.log('jo^^');
         console.log(' pioner moves to room: '+exeRoom);
          if(!creep.pos.isNearTo(Game.flags[flagName])) {
-            creep.moveTo(Game.flags[flagName], {reusePath:3}); 
+            creep.moveTo(Game.flags[flagName], {reusePath:0}); 
         } else {
             creep.memory.state='harvest'
             return;

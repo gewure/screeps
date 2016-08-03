@@ -48,10 +48,10 @@ var roomStatistics = {
     {
       var aValue = 1;
       var bValue = 1;
-      if(Game.creeps[creepA].memory.additional.isLeader == true)
-      aValue += 1;
-      if(Game.creeps[creepB].memory.additional.isLeader == true)
-      bValue += 1;
+      //if(Game.creeps[creepA].memory.additional.isLeader == true)
+      //aValue += 1;
+     // if(Game.creeps[creepB].memory.additional.isLeader == true)
+      //bValue += 1;
       return bValue - aValue;
     });
     

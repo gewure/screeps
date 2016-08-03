@@ -18,7 +18,7 @@ var roleRanged = {
          creep.memory.isInAttackRoom=true;
          creep.memory.freshSpawn=false;
             //creep.moveTo(Game.flags['simon']);
-creep.say('yo, attack');
+        creep.say('yo, attack');
      } else {
                          
 
@@ -40,10 +40,10 @@ creep.say('yo, attack');
         // if not a fresh spawn
         if(!creep.memory.freshSpawn) {
            
-            var closestHostiles; //=creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+            var closestHostiles =creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
             console.log('closests hostiles' + closestHostiles);
             if(!closestHostiles) {
-                var closestHostiles; //= //creep.room.find(FIND_HOSTILE_STRUCTURES);
+                 closestHostiles= creep.room.find(FIND_HOSTILE_STRUCTURES)[0];
             }
             /*if(creep.hits <= 100) {
                 fightMode = false;
@@ -59,14 +59,14 @@ creep.say('yo, attack');
                 }
        
             } else if(creep.rangedAttack(closestHostiles) == ERR_NOT_IN_RANGE /*&& creep.memory.fleeCounter != 0*/ ) {
-                //randomMove(creep, closestHostiles);
+                randomMove(creep, closestHostiles);
                 //creep.moveTo(closestHostiles);;
                 //rangedAttack(closestHostiles);
         
                     //creep.memory.fleeCounter--;
                 
             } else {
-         
+                creep.moveTo(closestHostiles);
                    
             }
             // move to spawn position

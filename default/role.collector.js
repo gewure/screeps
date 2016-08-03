@@ -251,7 +251,7 @@ var roleCollector = {
                 //var container = creep.pos.findClosestByRange(FIND_STRUCTURES)
                  var targets = creep.pos.findClosestByPath(FIND_STRUCTURES, {
                     filter: (structure) => {
-                        return (( structure.structureType == STRUCTURE_CONTAINER ) && structure.store[RESOURCE_ENERGY] + creep.carry.energy < structure.storeCapacity);
+                        return (( structure.structureType == STRUCTURE_LINK ) && structure.energy + creep.carry.energy < structure.energyCapacity);
                     }
                     });
                 var stor = Game.getObjectById(storageID);

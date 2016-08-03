@@ -2,7 +2,7 @@ var containerIDs = ['57796949720916567dc376ca', '5779cfd7986f591c34eadf9a', '577
 var storageID = '577b2f88e03b2946707baba5'; //TODO
 var towerIDs = ['5779f6286ce428014acf2e71', '577ecaedd47f7a6d1f04ec04']; //TODO not yet used
 var labIDs = [];
-var termID;
+var termID = '';
 
 //var idlePosX = 35;
 //var idlePosY = 31;
@@ -20,20 +20,23 @@ var termID;
 var balance = 37.34;// the lower the more refilling
 var minContainerCont = 100;
 var storageFullAmount = 900000;
-var minMineralInContainer = 100;
+var minMineralInContainer = 0;
+var minMineralInTerminal = 1000;
 //######################################## job is to keep the containers filled
 var roleStorer = {
     
-    run: function(creep, contIDs, contStorIDs, towIDs, labIDs_LO, labrLinkID, terminalID) {
+    //roleStorer.run(creep,mineralContainerIDs, contStorIDs, labIDs_LO, upgrLinkID, terminalID);
+    run: function(creep, contIDs, contStorIDs, labIDs_LO, labrLinkID, terminalID) {
         containerIDs = contIDs;
         containerIDsWStorage = contStorIDs;
-        towerIDs = towIDs;
         labIDs = labIDs_LO;
         labLinkID = labrLinkID;
         termID = terminalID;
     
         var lowestC = getLowestContainer();
         var highestC = getHighestContainer();
+        
+        var terminal = Game.getObjectById(termID);
         var linkToFill = Game.getObjectById('577f2b75f5dd02623e306006'); // TODO GENERIFY
         creep.memory.lowestC=lowestC;
         creep.memory.highestC=highestC;
@@ -44,29 +47,17 @@ var roleStorer = {
          
          //###################################### death logic
 	    if(creep.ticksToLive <= 35) {
-    	     var targets = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                    filter: (structure) => {(structure.structureType == STRUCTURE_STORAGE ) && _.sum(structure.store) < _.sum(structure.storeCapacity) + _.sum(creep.carry);}
-            });
-                    
-            if(targets) {
-                if(creep.transfer(targets, RESOURCES_ALL) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(targets);
-                     console.log('creep [balancer] ' + creep.name + ' dies soon and delivered his carry of ' + creep.carry.energy + ' to '+ targets);
-                }
-                
-                if(creep.carry.energy == 0) {
-                    console.log('creep suidicdes')
-                    creep.suicide();
-                }
-            }
+    	    
 	    } // -- end death logic
 	    
 	     var stor = Game.getObjectById('577b2f88e03b2946707baba5'); //storage
 	     var target = stor;
         //################ statemachine, cheap version
        // determine if the containers have minerals in them
-       var mineralContainer = findMineralContainer(creep, RESOURCE_LEMERGIUM); // TODO loop trhough this if you got oxygen!
+     
        //console.log(_.sum(mineralContainer.store)-mineralContainer.store[RESOURCE_ENERGY]);
+       
+       
          
          //TODO
         /*for(var i = 0; i <labIDs.length; i++) { //fill all labs with energy
@@ -79,69 +70,274 @@ var roleStorer = {
                 }
             }
         } */
-        
-	    if( ((mineralContainer != null) && (_.sum(mineralContainer.store)-mineralContainer.store[RESOURCE_ENERGY] > minMineralInContainer )) && (false) ) {
-	        
-	        console.log('a container containing minerals!');
-            var container = mineralContainer;
-            
-            for(var i = 0; i <labIDs.length; i++) {
-                var lab = Game.getObjectById(labIDs[i]);
-                console.log(lab);
-                if(i==0) { //reaction lab
-                   //
-                   console.log('reaction lab');
-                   i++;
-                }
-                
-                if(i==1) { //lemergium
-                    if(lab.energy < lab.energyCapacity && creep.carry.energy > 0 ) { // if it doesnt have energy
-                        console.log('ahoy, storer wants to fill a Lab with energy');
-                        fillLabFromContainer(creep, RESOURCE_ENERGY, lab, labLinkID); // fill lab with energy from link!
+         
+	    if( creep.ticksToLive > 0) {
+	       
+                 var lab = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+                    filter: (structure) => {
+                        return ((structure.structureType == STRUCTURE_LAB) && (structure.energy < structure.energyCapacity));
                     }
+                 });
+                
+  
+                if(lab) { // fill labs with energy
+	                creep.say('lab++');
+
+                    if(lab.energy < lab.energyCapacity && creep.carry.energy == 0 ) { // if it doesnt have energy
+                           // console.log('ahoy, storer wants to fill a Lab with energy');
+                        if(creep.transfer(lab, RESOURCE_ENERGY)== ERR_NOT_IN_RANGE) {
+                            creep.moveTo(lab);
+                        } 
+                        if(creep.carry.energy == 0) {
+                           var container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                            filter: (structure) => {
+                                    return ((structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_TERMINAL ) && (structure.store[RESOURCE_ENERGY] > structure.storeCapacity*0.5));
+                                }
+                            });
+                             if(container)
+                            if(_.sum(container.store) + _.sum(creep.carry) < container.storeCapacity) {
+                                if(creep.withdraw(container, RESOURCE_ENERGY) ==ERR_NOT_IN_RANGE) {
+                                    creep.moveTo(container);
+                                }
+                            }
+                        }
+                    } else {
+                        //creep.say('else');
+                        if(creep.withdraw(stor, RESOURCE_ENERGY, creep.carryCapacity)==ERR_NOT_IN_RANGE) {
+                            creep.moveTo(stor);
+                        }
+                        if(creep.carry.energy == creep.carryCapacity)
+                        if(creep.transfer(lab, RESOURCE_ENERGY, creep.carry.energy)== ERR_NOT_IN_RANGE) {
+                            creep.moveTo(lab);
+                        } 
+                    }
+                  
+                    } else { // fill corresponding labs with corresponding minerals
+                        //creep.say('mins');
+                        if(creep.carry.energy > 0) {
+                             var container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                            filter: (structure) => {
+                                    return ((structure.structureType == STRUCTURE_CONTAINER) && (structure.store[RESOURCE_ENERGY] < structure.storeCapacity));
+                                }
+                            });
+                            if(container)
+                            if(_.sum(container.store) + _.sum(creep.carry) < container.storeCapacity) {
+                                if(creep.transfer(container, RESOURCE_ENERGY) ==ERR_NOT_IN_RANGE) {
+                                    creep.moveTo(container);
+                                }
+                            }
+                        }
+                        
+                        var lab = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+                            filter: (structure) => {
+                                return ((structure.structureType == STRUCTURE_LAB) && (structure.mineralAmount < structure.mineralCapacity*0.9) && structure.id!=labIDs[2]);
+                            }
+                         });
                     
-                    if(lab.mineralAmount < lab.mineralCapacity ) { // i it doesnt have minerals
-                        fillLabFromContainer(creep, RESOURCE_LEMERGIUM, lab, container);
-                    } else {
-                        target = stor;
-                    }
-                    i++;
-                }
-                
-                if(i==2) { // oxygen
-                    if(lab.mineralAmount < lab.mineralCapacity && creep.carry[RESOURCE_OXYGEN] > 0) {
-                        fillLabFromContainer(creep, RESOURCE_OXYGEN, lab, container);
-                    } else {
-                        target = stor;
-                    }
-                   i++;
-                } else { // deliver to storage
-                    if( Object.keys(creep.carry).map((resource) => { creep.transfer(target, resource)== ERR_NOT_IN_RANGE}) ) {
-                        creep.moveTo(target, {reusePath:3});
-                    }
-                }
-            }
-           // console.log(target);
-            //creep.moveTo(container);
-            // get from container
+                        //var resO = findMineralContainer(creep, RESOURCE_OXYGEN);
+                        //creep.say(resO.amount);
+                        //var resL = findMineralContainer(creep, RESOURCE_LEMERGIUM);
+                        if(!lab) {
+                            lab = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
+                            filter: (structure) => {
+                                return ((structure.structureType == STRUCTURE_LAB) && (structure.mineralAmount < structure.mineralCapacity*0.9) && structure.id!=labIDs[2]);
+                            }
+                         });
+                        } 
+                        if(lab.id == labIDs_LO[2]) { //reaction lab
+                            creep.say('reactLab');
 
-        
-	    } else {  // fill the link
-	        console.log(linkToFill);
+                           if(lab.mineralAmount > 1500) {
+                               if(_.sum(creep.carry) < creep.carryCapacity)
+                                if(creep.withdraw(lab, RESOURCE_LEMERGIUM_OXIDE)==ERR_NOT_IN_RANGE) {
+                                        creep.moveTo(lab);
+                                }
+                                if(_.sum(creep.carry) == creep.carryCapacity) {
+                                        if(creep.transfer(terminal, RESOURCE_LEMERGIUM_OXIDE)==ERR_NOT_IN_RANGE) {
+                                            creep.moveTo(terminal);
+                                         }
+                                    }
+                           }
+                         lab = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+                            filter: (structure) => {
+                                return ((structure.structureType == STRUCTURE_LAB) && (structure.mineralAmount < structure.mineralCapacity && structure.id!=labIDs_LO[2])); // new lab is not this! important!
+                            }
+                         });
+                         
+                        }
+                        
+                        if(lab.id == labIDs_LO[1]) { //lemergium
+                        creep.say('L lab');
+                        
+                           if(creep.carry.O > 0) {
+                                if(creep.transfer(Game.getObjectById(labIDs_LO[0]), RESOURCE_OXYGEN)==ERR_NOT_IN_RANGE) {
+                                    creep.moveTo(Game.getObjectById(labIDs_LO[0]));
+                                }
+                            }
+                            var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                                filter: (structure) => {
+                                        return ((structure.structureType == STRUCTURE_TERMINAL || structure.structureType == STRUCTURE_STORAGE ||structure.structureType== STRUCTURE_CONTAINER) && (structure.store[RESOURCE_LEMERGIUM] >= creep.carryCapacity));
+                                    }
+                            });
 
-	        if((_.sum(creep.carry) > 0 && _.sum(creep.carry) != creep.carryCapacity) || creep.carry.energy != _.sum(creep.carry)){ // ..or creep has minerals -> empty them
+                            if(lab.mineralAmount < lab.mineralCapacity) { // i it doesnt have minerals
+                              if(lab.mineralType==RESOURCE_LEMERGIUM || lab.mineralAmount == 0) {
+                                    if(creep.withdraw(target, RESOURCE_LEMERGIUM)==ERR_NOT_IN_RANGE) {
+                                        creep.moveTo(target);
+                                    }
+                                    if(_.sum(creep.carry) == creep.carryCapacity) {
+                                        if(creep.transfer(lab, RESOURCE_LEMERGIUM)==ERR_NOT_IN_RANGE) {
+                                            creep.moveTo(lab);
+                                         }
+                                    }
+                                } else if(lab.mineralType==RESOURCE_OXYGEN) { //TODO
+                                     if(creep.withdraw(lab, RESOURCE_OXYGEN)==ERR_NOT_IN_RANGE) {
+                                        creep.moveTo(lab);
+                                    }
+                                    if(_.sum(creep.carry) == creep.carryCapacity) {
+                                        if(creep.transfer(terminal, RESOURCE_OXYGEN)==ERR_NOT_IN_RANGE) {
+                                            creep.moveTo(terminal);
+                                         }
+                                    }
+                                } else {
+                                     if(creep.withdraw(target, RESOURCE_LEMERGIUM)==ERR_NOT_IN_RANGE) {
+                                        creep.moveTo(target);
+                                    }
+                                    if(_.sum(creep.carry) == creep.carryCapacity) {
+                                        if(creep.transfer(lab, RESOURCE_LEMERGIUM)==ERR_NOT_IN_RANGE) {
+                                            creep.moveTo(lab);
+                                         }
+                                    }
+                                }
+                            } 
+                            
+                        }
+                        
+                        if(lab.id == labIDs_LO[0]) { // oxygen
+                           creep.say('O lab');
+                            if(creep.carry.L > 0) {
+                                if(creep.transfer(Game.getObjectById(labIDs_LO[1]), RESOURCE_LEMERGIUM)==ERR_NOT_IN_RANGE) {
+                                    creep.moveTo(Game.getObjectById(labIDs_LO[1]));
+                                }
+                            }
+                            var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                                filter: (structure) => {
+                                        return ((structure.structureType == STRUCTURE_TERMINAL || structure.structureType == STRUCTURE_STORAGE ||structure.structureType== STRUCTURE_CONTAINER) && (structure.store[RESOURCE_OXYGEN] >= creep.carryCapacity));
+                                    }
+                            });
+                                            
+                            if(lab.mineralAmount <= lab.mineralCapacity *0.5) {
+                                if(lab.mineralAmount == 0 || lab.mineralType==RESOURCE_OXYGEN) {
+                                    
+                                    //creep.say('oxygen!');
+                                    
+                                    if(target) { //if a container with O
+                                        //creep.say('minCon: O');
+                                        if(creep.withdraw(target, RESOURCE_OXYGEN, creep.carryCapacity)==ERR_NOT_IN_RANGE) {
+                                            creep.moveTo(target);
+                                        }
+                                        if(creep.carry.O > 0) {
+                                                if(creep.transfer(lab, RESOURCE_OXYGEN, creep.carryCapacity)==ERR_NOT_IN_RANGE) {
+                                                    creep.moveTo(lab);
+                                                }
+                                            } else {
+                                                if( Object.keys(creep.carry).map((resource) => { creep.transfer(stor, resource)== ERR_NOT_IN_RANGE}) ) {
+                                                   creep.moveTo(stor, {reusePath:3});
+                                                }
+                                            }
+                                    } else { // get it from terminal
+                                            //creep.say('O somewhere?');
+                                           
+                                        if(creep.withdraw(target, RESOURCE_OXYGEN, creep.carryCapacity)==ERR_NOT_IN_RANGE) {
+                                            creep.moveTo(target);
+                                        }
+                                        if(_.sum(creep.carry) == creep.carryCapacity) {
+                                            if(creep.carry.O > 0) {
+                                                if(creep.transfer(lab, RESOURCE_OXYGEN, creep.carryCapacity)==ERR_NOT_IN_RANGE) {
+                                                    creep.moveTo(lab);
+                                                }
+                                            } else {
+                                                if( Object.keys(creep.carry).map((resource) => { creep.transfer(stor, resource)== ERR_NOT_IN_RANGE}) ) {
+                                                   creep.moveTo(stor, {reusePath:3});
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else { // lab has Lemergium, not good..
+                                    creep.say(':(');
+                                    //creep.say(_.sum(creep.carry));
+                                    //creep.say(lab.id);
+                                    if(_.sum(creep.carry) == 0) {
+                                    //var ret = creep.withdraw(lab, RESOURCE_LEMERGIUM);
+                                    //creep.say(ret);
+                                        if(creep.withdraw(lab, RESOURCE_LEMERGIUM)==ERR_NOT_IN_RANGE) {
+                                            creep.moveTo(lab);
+                                        }
+                                    } else {
+                                        if(creep.transfer(terminal, RESOURCE_LEMERGIUM)==ERR_NOT_IN_RANGE) {
+                                            creep.moveTo(terminal);
+                                        }
+                                    }
+                                    
+                                }
+                                //fillLabFromContainer(creep, RESOURCE_OXYGEN, lab, container);
+                            } 
+                          
+                        } else { 
+                            creep.say('new labs?!');
+                            
+                            
+                            
+                            // deliver to storage
+                            //if( Object.keys(creep.carry).map((resource) => { creep.transfer(target, resource)== ERR_NOT_IN_RANGE}) ) {
+                            //    creep.moveTo(target, {reusePath:3});
+                            }
+                      
+                    }
+               }
+               
+	  else if (false && (stor.store[RESOURCE_LEMERGIUM] >= 5000 )&& (_.sum(terminal.store) <terminal.storeCapacity)) { // fill terminal wit lemergium
+	               creep.say('L -> stor');
+	             if(_.sum(creep.carry) < creep.carryCapacity ) {
+	                  
+    	                if(creep.withdraw(stor,RESOURCE_LEMERGIUM, creep.carryCapacity) == ERR_NOT_IN_RANGE) {
+        	                creep.moveTo(stor, {reusePath:3});
+        	            }
+	                }  if(creep.carry.L == creep.carryCapacity) {
+	                  
+	                    if(creep.transfer(terminal,RESOURCE_LEMERGIUM, creep.carryCapacity) == ERR_NOT_IN_RANGE) {
+        	                creep.moveTo(terminal, {reusePath:3});
+        	            }
+	                }
+	            
+	        
+	    } else if(false) {  // fill the link
+	       // console.log(linkToFill);
+            creep.say('link++');
+            //reep.say(_.sum(creep.carry));
+	        if(_.sum(creep.carry) > 0 && creep.carry.energy < _.sum(creep.carry)){ // ..or creep has minerals -> empty them
+	            
+	            creep.say('--');
 	            //Object.keys(creep.carry).map((resource) => { creep.transfer(target, resource) });
                 //(target, RESOURCE_LEMERGIUM, _.sum(creep.carry))==ERR_NOT_IN_RANGE) ||
     	        if( Object.keys(creep.carry).map((resource) => { creep.transfer(target, resource)== ERR_NOT_IN_RANGE}) ) {
                         creep.moveTo(target, {reusePath:3});
                 }
 	        } else { // go fill the link with energy
-	            console.log('storer fills upgraders Link');
+	            
 	            if(creep.carry.energy < creep.carryCapacity && linkToFill.energy < 550) {
-	                
-    	            if(creep.withdraw(target,RESOURCE_ENERGY, creep.carryCapacity) == ERR_NOT_IN_RANGE) {
-    	                creep.moveTo(target, {reusePath:3});
+	               //var ret = creep.withdraw(target,RESOURCE_ENERGY, 100);
+	              //creep.say(ret);
+	              //creep.moveTo(target, {reusePath:2});
+    	            if( creep.withdraw(target,RESOURCE_ENERGY, 100)==ERR_NOT_IN_RANGE) {
+    	               creep.moveTo(target);
+    	               
+    	            } else {
+    	                if(creep.transfer(linkToFill, RESOURCE_ENERGY, creep.carry.energy)==ERR_NOT_IN_RANGE) {
+	                        creep.moveTo(linkToFill, {reusePath:3});
+	                    }
     	            }
+    	            // creep.say(creep.carry.energy);
 	            } else if(creep.carry.energy == creep.carryCapacity && linkToFill.energy+creep.carry.energy <= 800) {
 
 	                if(creep.transfer(linkToFill, RESOURCE_ENERGY, creep.carry.energy)==ERR_NOT_IN_RANGE) {
@@ -171,28 +367,33 @@ var roleStorer = {
 }; // end of roleBalancer
 // get minerals from container
 function fillLabFromContainer(creep, resourceType, targetLab, mineralContainer) {
-    var stor = Game.getObjectById('577b2f88e03b2946707baba5'); //storage
-    console.log('XXXXXXXXXXXXXXXXXXXXXXX FillLabFromContainer() @ storer');
-     if(_.sum(creep.carry[resourceType]) > 0) { // deliver resource to lab or storage
-                
+    var stor = creep.room.storage; //storage
+    //console.log('XDSSSSSSSSSSSSSSSSSSS' + resourceType + 'FSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS');
+     if(creep.carry[resourceType] > 0) { // deliver resource to lab or storage
+            creep.say('deliver');
             if(creep.transfer(targetLab, resourceType, creep.carry[resourceType])==ERR_NOT_IN_RANGE){
             //if(Object.keys(creep.carry).map((resource) => { creep.transfer(target, resource)== ERR_NOT_IN_RANGE}) ) {
-                creep.moveTo(targetLab, {reusePath:3});
+                creep.moveTo(targetLab);
             }
     } else { //find resources
-        if(_.sum(creep.carry) > 0) {
+        /*if(_.sum(creep.carry) > 0) {
              if( Object.keys(creep.carry).map((resource) => { creep.transfer(stor, resource)== ERR_NOT_IN_RANGE}) ) {
                         creep.moveTo(stor, {reusePath:3});
                 }
-        }
+        }*/
         if(mineralContainer.structureType==STRUCTURE_CONTAINER) { // its a container
+        creep.say('fill');
             console.log('its a container @ storer');
             if(mineralContainer.store[resourceType] > 0) {
-                if(mineralContainer.transfer(creep, resourceType, creep.carryCapacity-_.sum(creep.carry))==ERR_NOT_IN_RANGE){
+                    creep.say('filLabF');
+                    //creep.say(resourceType);
+                    //creep.say('')
+                if(creep.withdraw(mineralContainer, resourceType, creep.carryCapacity-_.sum(creep.carry))==ERR_NOT_IN_RANGE){
                     creep.moveTo(mineralContainer, {reusePath:3});
+                    creep.say('bla');
                 }
             }
-        } else {  // its a link
+        } else {  // 
             if(creep.withdraw(mineralContainer, RESOURCE_ENERGY, creep.carryCapacity-_.sum(creep.carry))==ERR_NOT_IN_RANGE){
                     creep.moveTo(mineralContainer, {reusePath:3});
                 }
@@ -204,20 +405,26 @@ function fillLabFromContainer(creep, resourceType, targetLab, mineralContainer) 
 //################# helping functions
 //find container containing a mineral, not just energy
 function findMineralContainer(creep, resourceType){
-
+    var terminal = creep.room.terminal;
+        //creep.say('minCon: '+resourceType);
+    //console.log(resourceType);
     for(var i = 0; i < containerIDs.length; i++){
         
     	        container = Game.getObjectById(containerIDs[i]);
-    	        
-    	        if(_.sum(container.store) > container.store.energy) { // container has some mineral in it
-    	               //containerHoldsMineral = true;
-    	               if(container.store[resourceType] > 0) {
+    	        //creep.say(terminal);
+    	        if(_.sum(container.store) > container.store.energy || terminal.store[resourceType] > minMineralInTerminal + creep.carryCapacity) { // container has some mineral in it
+    	        //creep.say('minCon');
+    	               if(container.store[resourceType] > 0) {// first try from container - else from terminal
+    	                //creep.say('oi');
     	                return container;
+    	               }
+    	               if(terminal.store[resourceType]> 0) {  // then  from termial
+    	                   return terminal;
     	               }
     	        } else {
     	            return;//containerHoldsMineral = false;
     	        }
-    } 
+    } return Game.getObjectById(termID);
 }
 
 
